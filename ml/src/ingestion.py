@@ -1,21 +1,36 @@
-# Ingestion module 
+# Ingestion Module 
+
 # Mitchell Hughes
 # 31/03/2026
 
-from fileinput import filename
+# Note: This module is responsible for loading data from CSV or Excel files, validating the data, standardising column names, and saving a copy of the raw data for traceability. It includes error handling to ensure that only valid data is processed further in the pipeline.
+# The pipeline wrapper function to be called in pipeline.py is on line 137. 
 
 import pandas as pd
 from datetime import datetime
 import os
+from pathlib import Path
 
 
 # ==================================
 # Configuration
 # ==================================
 
-RAW_DATA_DIR = 'data/raw'
+# Configure Paths
+CURRENT_DIR = Path(__file__).resolve().parent
+
+# Path for ML directory (assuming this script is in ml/src/)
+ML_DIR = CURRENT_DIR.parent
+
+# Data Directories
+RAW_DATA_DIR = ML_DIR / 'data' / 'raw'
+CLEAN_DATA_DIR = ML_DIR / 'data' / 'clean'
+PROCESSED_DATA_DIR = ML_DIR / 'data' / 'processed'
+
+# Allowed file extensions for ingestion
 ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
 
+# TODO: MAY NEED CHANGES
 REQUIRED_COLUMNS = ['OperatorControlNumber', 'DifficultyDate', 'AircraftSerialNumber', 'PartCondition', 'Discrepancy']
 
 
@@ -165,3 +180,14 @@ def ingest_data(file_path: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # TODO: Add testing code here to run the ingestion pipeline on a sample file and print the resulting DataFrame.
+
+    # Test file path
+    sample_file = RAW_DATA_DIR / 'NLP_Dataset_2026.xlsx' 
+
+    try:
+        df = ingest_data(sample_file)
+        print(df.head())
+    except Exception as e:
+        print(f"Error during ingestion: {str(e)}")
+
+    
