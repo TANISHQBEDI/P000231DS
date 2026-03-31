@@ -2,6 +2,9 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 
+from ml.src.ingestion import ingest_data
+from ml.src.data_cleaning.DataCleaner import DataCleaner
+
 
 class FeatureEngineer:
     """
@@ -10,14 +13,6 @@ class FeatureEngineer:
     """
 
     def __init__(self, df: pd.DataFrame, text_column: str, label_column: str):
-        """
-        Initialize Feature Engineer
-
-        Parameters:
-        df (pd.DataFrame): Input dataframe
-        text_column (str): Column containing text data
-        label_column (str): Target column for classification
-        """
 
         self.df = df.copy()
         self.text_column = text_column
@@ -27,10 +22,10 @@ class FeatureEngineer:
         # Validation
         # =========================
         if self.text_column not in self.df.columns:
-            raise ValueError(f"Column '{self.text_column}' not found in dataframe")
+            raise ValueError(f"Column '{self.text_column}' not found")
 
         if self.label_column not in self.df.columns:
-            raise ValueError(f"Column '{self.label_column}' not found in dataframe")
+            raise ValueError(f"Column '{self.label_column}' not found")
 
         # =========================
         # Handle missing values
@@ -47,69 +42,39 @@ class FeatureEngineer:
     # Label Encoding
     # ==================================
     def encode_labels(self):
-        """
-        Encode target labels into numeric form
-        """
         self.y = self.label_encoder.fit_transform(self.labels)
         return self.y
 
     # ==================================
-    # Bag of Words (BoW)
+    # Bag of Words
     # ==================================
     def bow_features(self, max_features=5000):
-        """
-        Generate Bag of Words features
-        """
         self.bow_vectorizer = CountVectorizer(max_features=max_features)
         X = self.bow_vectorizer.fit_transform(self.texts)
-
-        # Store feature names (useful later)
         self.feature_names = self.bow_vectorizer.get_feature_names_out()
-
         return X
 
     # ==================================
-    # TF-IDF Features (Recommended)
+    # TF-IDF Features
     # ==================================
     def tfidf_features(self, max_features=5000):
-        """
-        Generate TF-IDF features
-        """
         self.tfidf_vectorizer = TfidfVectorizer(max_features=max_features)
         X = self.tfidf_vectorizer.fit_transform(self.texts)
-
-        # Store feature names (important for XAI later)
         self.feature_names = self.tfidf_vectorizer.get_feature_names_out()
-
         return X
 
     # ==================================
-    # BERT Input Preparation
+    # BERT Input
     # ==================================
     def get_bert_inputs(self):
-        """
-        Prepare raw text and encoded labels for BERT model
-        (no heavy preprocessing applied)
-        """
         if not hasattr(self, "y"):
             self.encode_labels()
-
         return self.texts.tolist(), self.y
 
     # ==================================
     # Full Pipeline
     # ==================================
     def process(self, method="tfidf", max_features=5000):
-        """
-        Run full feature engineering pipeline
-
-        Parameters:
-        method (str): 'tfidf' or 'bow'
-        max_features (int): number of features
-
-        Returns:
-        X (features), y (labels)
-        """
 
         y = self.encode_labels()
 
@@ -122,7 +87,7 @@ class FeatureEngineer:
             X = self.bow_features(max_features)
 
         else:
-            raise ValueError("Invalid method. Choose 'tfidf' or 'bow'")
+            raise ValueError("Invalid method")
 
         return X, y
 
@@ -131,43 +96,45 @@ class FeatureEngineer:
 # TESTING BLOCK
 # ==================================
 if __name__ == "__main__":
-    print("TEST RUNNING")
 
-    # Sample dataset (replace with real dataset later)
-    data = {
-        "discrepancy": [
-            "engine failure detected",
-            "cabin odor reported",
-            "hydraulic leak found",
-            "engine failure detected"
-        ],
-        "label": [
-            "engine",
-            "cabin",
-            "hydraulic",
-            "engine"
-        ]
-    }
+    print("TEST RUNNING - FULL PIPELINE")
 
-    df = pd.DataFrame(data)
+    try:
+        # =========================
+        # STEP 1: INGESTION
+        # =========================
+        df = ingest_data("ml/data/raw/NLP_Dataset_2026.xlsx")
 
-    # Initialize Feature Engineer
-    fe = FeatureEngineer(df, text_column="discrepancy", label_column="label")
+        print("Ingestion done")
 
-    # Generate features
-    X, y = fe.process(method="tfidf")
+        # =========================
+        # STEP 2: CLEANING
+        # =========================
+        cleaner = DataCleaner(df)
+        df_clean = cleaner.process("discrepancy").get_data()
 
-    print("\nFeature Engineering Completed")
-    print("Feature matrix shape:", X.shape)
-    print("Encoded labels:", y)
+        print("Cleaning done")
 
-    # Show sample vector
-    print("\nSample feature vector:", X.toarray()[0])
+        # =========================
+        # STEP 3: FEATURE ENGINEERING
+        # =========================
 
-    # Show feature names (top 10)
-    print("\nSample feature names:", fe.feature_names[:10])
+        # CHANGE LABEL COLUMN BASED ON YOUR DATA
+        label_column = "partcondition"  
 
-    # BERT-ready data
-    texts, labels = fe.get_bert_inputs()
-    print("\nBERT Input Sample:")
-    print(texts[:2])
+        fe = FeatureEngineer(df_clean, "discrepancy", label_column)
+
+        X, y = fe.process(method="tfidf")
+
+        print("\nFeature Engineering Completed")
+        print("Shape:", X.shape)
+        print("Labels sample:", y[:5])
+
+        print("\nSample feature vector:", X.toarray()[0])
+        print("\nFeature names:", fe.feature_names[:10])
+
+        texts, labels = fe.get_bert_inputs()
+        print("\nBERT sample:", texts[:2])
+
+    except Exception as e:
+        print("Error:", e)
