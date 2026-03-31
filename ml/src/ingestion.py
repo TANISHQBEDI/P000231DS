@@ -1,0 +1,167 @@
+# Ingestion module 
+# Mitchell Hughes
+# 31/03/2026
+
+from fileinput import filename
+
+import pandas as pd
+from datetime import datetime
+import os
+
+
+# ==================================
+# Configuration
+# ==================================
+
+RAW_DATA_DIR = 'data/raw'
+ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
+
+REQUIRED_COLUMNS = ['OperatorControlNumber', 'DifficultyDate', 'AircraftSerialNumber', 'PartCondition', 'Discrepancy']
+
+
+# ==================================
+# Main Ingestion Function
+# ==================================
+
+def load_data(file_path: str) -> pd.DataFrame:
+    """
+    Load data from a CSV file or Excel file into a pandas DataFrame.
+
+    Parameters:
+    file_path (str): The path to the CSV or Excel file.
+
+    Returns:
+    pd.DataFrame: The loaded data as a DataFrame.
+    """
+
+    # Get the file extension and validate it
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(f"Unsupported file extension: {ext}. Allowed extensions are: {ALLOWED_EXTENSIONS}")
+
+    try:
+        if ext == '.csv':
+            data = pd.read_csv(file_path)
+
+        elif ext == '.xlsx':
+            data = pd.read_excel(file_path)
+
+        return data
+    
+    except Exception as e:
+        raise Exception(f"Error loading file {file_path}: {str(e)}")
+
+
+# ==================================
+# Validation Function
+# ==================================
+
+def validate_data(df: pd.DataFrame) -> None:
+    """
+    Validate the DataFrame to ensure it contains the required columns.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame to validate.
+
+    Raises:
+    ValueError: If any required columns are missing.
+    """
+
+    # Check if the Data is empty
+    if df.empty or df is None:
+        raise ValueError("The Data is empty. No data to validate.")
+
+    # Check for missing required columns
+    missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+    
+    # Check for null values in required columns
+    if df[REQUIRED_COLUMNS].isnull().any().any():
+        raise ValueError("Some required columns contain null values. No valid data to process.")
+    
+
+# ==================================
+# Standardistion Function
+# ==================================
+
+def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Standardise column names to a consistent format.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame with original column names.
+
+    Returns:
+    pd.DataFrame: The DataFrame with standardised column names.
+    """
+
+    # Standardise column names by stripping whitespace, converting to lowercase, and replacing spaces with underscores
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "_")
+    )
+
+    # Remove any empty rows
+    df = df.dropna(how=all)  
+
+    return df
+
+# ==================================
+# Save Raw Data
+# ==================================
+
+def save_raw_copy(df: pd.DataFrame, original_filename: str) -> str:
+    """
+    Saves a timestamped copy of ingested data into /data/raw/
+    """
+
+    os.makedirs(RAW_DATA_DIR, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{timestamp}_{os.path.basename(original_filename)}"
+
+    save_path = os.path.join(RAW_DATA_DIR, filename)
+
+    df.to_csv(save_path, index=False)
+
+    return save_path
+
+
+# ==================================
+# Pipeline Wrapper Function
+# ==================================
+
+def ingest_data(file_path: str) -> pd.DataFrame:
+    """
+    Ingest data from a file, validate it, standardise it, and save the raw data.
+
+    Parameters:
+    file_path (str): The path to the input file.
+
+    Returns:
+    pd.DataFrame: The validated and standardised DataFrame.
+    """
+
+    # Load the data
+    df = load_data(file_path)
+
+    # Validate the data
+    validate_data(df)
+
+    # Standardise column names
+    df = standardise_columns(df)
+
+    # Save the raw data
+    save_raw_copy(df, original_filename=os.path.basename(file_path))
+
+    return df
+
+# ==================================
+# Tester
+# ==================================
+
+if __name__ == "__main__":
+    # TODO: Add testing code here to run the ingestion pipeline on a sample file and print the resulting DataFrame.
