@@ -3,8 +3,12 @@
 # Mitchell Hughes
 # 31/03/2026
 
-# Note: This module is responsible for loading data from CSV or Excel files, validating the data, standardising column names, and saving a copy of the raw data for traceability. It includes error handling to ensure that only valid data is processed further in the pipeline.
-# The pipeline wrapper function to be called in pipeline.py is on line 137. 
+# ==================================
+# Notes:
+# ================================== 
+# - This module is responsible for ingesting data from various sources, validating it, and standardising it for use in the ML pipeline.
+# - The main function is `ingest_data` (line 157), which will run through the entire ingestion process.
+# - The output will be the cleaned dataframe, and will also save a copy of the raw data for traceability.s
 
 import pandas as pd
 from datetime import datetime
@@ -97,7 +101,7 @@ def validate_data(df: pd.DataFrame) -> None:
     
 
 # ==================================
-# Standardistion Function
+# Standardisation Function
 # ==================================
 
 def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -123,6 +127,7 @@ def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(how='all')
 
     return df
+
 
 # ==================================
 # Save Raw Data
@@ -173,6 +178,7 @@ def ingest_data(file_path: str) -> pd.DataFrame:
     save_raw_copy(df, original_filename=os.path.basename(file_path))
 
     return df
+
 
 # ==================================
 # Tester
