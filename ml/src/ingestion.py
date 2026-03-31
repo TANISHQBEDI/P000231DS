@@ -31,7 +31,7 @@ PROCESSED_DATA_DIR = ML_DIR / 'data' / 'processed'
 ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
 
 # TODO: MAY NEED CHANGES
-REQUIRED_COLUMNS = ['OperatorControlNumber', 'DifficultyDate', 'AircraftSerialNumber', 'PartCondition', 'Discrepancy']
+REQUIRED_COLUMNS = ['OperatorControlNumber','Discrepancy']
 
 
 # ==================================
@@ -120,7 +120,7 @@ def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     # Remove any empty rows
-    df = df.dropna(how=all)  
+    df = df.dropna(how='all')
 
     return df
 
@@ -179,6 +179,7 @@ def ingest_data(file_path: str) -> pd.DataFrame:
 # ==================================
 
 if __name__ == "__main__":
+
     # TODO: Add testing code here to run the ingestion pipeline on a sample file and print the resulting DataFrame.
 
     # Test file path
