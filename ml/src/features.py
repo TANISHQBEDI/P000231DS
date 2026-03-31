@@ -23,8 +23,19 @@ class FeatureEngineer:
         self.text_column = text_column
         self.label_column = label_column
 
+        # =========================
+        # Validation
+        # =========================
+        if self.text_column not in self.df.columns:
+            raise ValueError(f"Column '{self.text_column}' not found in dataframe")
+
+        if self.label_column not in self.df.columns:
+            raise ValueError(f"Column '{self.label_column}' not found in dataframe")
+
+        # =========================
         # Handle missing values
-        self.df[self.text_column] = self.df[self.text_column].fillna("")
+        # =========================
+        self.df[self.text_column] = self.df[self.text_column].fillna("").astype(str)
         self.df[self.label_column] = self.df[self.label_column].fillna("unknown")
 
         self.texts = self.df[self.text_column]
@@ -51,6 +62,10 @@ class FeatureEngineer:
         """
         self.bow_vectorizer = CountVectorizer(max_features=max_features)
         X = self.bow_vectorizer.fit_transform(self.texts)
+
+        # Store feature names (useful later)
+        self.feature_names = self.bow_vectorizer.get_feature_names_out()
+
         return X
 
     # ==================================
@@ -62,6 +77,10 @@ class FeatureEngineer:
         """
         self.tfidf_vectorizer = TfidfVectorizer(max_features=max_features)
         X = self.tfidf_vectorizer.fit_transform(self.texts)
+
+        # Store feature names (important for XAI later)
+        self.feature_names = self.tfidf_vectorizer.get_feature_names_out()
+
         return X
 
     # ==================================
@@ -72,9 +91,10 @@ class FeatureEngineer:
         Prepare raw text and encoded labels for BERT model
         (no heavy preprocessing applied)
         """
-        texts = self.texts.tolist()
-        labels = self.encode_labels()
-        return texts, labels
+        if not hasattr(self, "y"):
+            self.encode_labels()
+
+        return self.texts.tolist(), self.y
 
     # ==================================
     # Full Pipeline
@@ -93,6 +113,8 @@ class FeatureEngineer:
 
         y = self.encode_labels()
 
+        print(f"Using {method.upper()} with max_features={max_features}")
+
         if method == "tfidf":
             X = self.tfidf_features(max_features)
 
@@ -110,6 +132,7 @@ class FeatureEngineer:
 # ==================================
 if __name__ == "__main__":
     print("TEST RUNNING")
+
     # Sample dataset (replace with real dataset later)
     data = {
         "discrepancy": [
@@ -131,16 +154,20 @@ if __name__ == "__main__":
     # Initialize Feature Engineer
     fe = FeatureEngineer(df, text_column="discrepancy", label_column="label")
 
-    # Generate TF-IDF features
+    # Generate features
     X, y = fe.process(method="tfidf")
 
-    print("Feature Engineering Completed")
+    print("\nFeature Engineering Completed")
     print("Feature matrix shape:", X.shape)
     print("Encoded labels:", y)
 
+    # Show sample vector
     print("\nSample feature vector:", X.toarray()[0])
+
+    # Show feature names (top 10)
+    print("\nSample feature names:", fe.feature_names[:10])
 
     # BERT-ready data
     texts, labels = fe.get_bert_inputs()
     print("\nBERT Input Sample:")
-    print(texts[:2]) 
+    print(texts[:2])
