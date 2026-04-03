@@ -145,7 +145,7 @@ def save_raw_copy(df: pd.DataFrame, original_filename: str) -> str:
 
     save_path = os.path.join(RAW_DATA_DIR, filename)
 
-    df.to_csv(save_path, index=False)
+    # df.to_csv(save_path, index=False)
 
     return save_path
 

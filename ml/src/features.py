@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 
 # Import previous pipeline modules
 from ml.src.ingestion import ingest_data
-from ml.src.data_cleaning.DataCleaner import DataCleaner
+from ml.src.data_cleaning.data_cleaner import DataCleaner
 
 
 class FeatureEngineer:
