@@ -11,7 +11,7 @@ class TextCleaner:
     def get_column_names(self) -> list[str]:
         return list(self.__data.columns)
     
-    def select_column_names(self, select_columns: list[str]) -> 'TextPreprocessor':
+    def select_column_names(self, select_columns: list[str]) -> 'TextCleaner':
         self.__data = self.__data[[column for column in select_columns]]
         return self
 
