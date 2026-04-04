@@ -7,9 +7,9 @@ class Bootstrap:
     def run():
         from src.utils.paths import RAW_FILE
         from src.ingestion import ingest_data
-        from src.preprocessing.text_preprocessor import TextPreprocessor
+        from src.preprocessing.text_cleaning import TextCleaner
         df = ingest_data(RAW_FILE)
-        tp = TextPreprocessor(df)
+        tp = TextCleaner(df)
         tp = tp.select_column_names(['partcondition', 'discrepancy'])
         print(tp.get_data())
 

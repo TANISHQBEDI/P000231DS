@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-class TextPreprocessor:
+class TextCleaner:
     def __init__(self, data: pd.DataFrame):
         self.__data = data
     
@@ -18,6 +18,6 @@ class TextPreprocessor:
 if __name__ == '__main__':
     from src.utils.paths import RAW_FILE
     df = pd.read_csv(RAW_FILE)
-    tp = TextPreprocessor(df)
+    tp = TextCleaner(df)
     tp = tp.select_column_names(['PartCondition', 'Discrepancy'])
     print(tp.get_data())
