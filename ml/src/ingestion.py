@@ -1,9 +1,7 @@
+# ==================================
 # Ingestion Module 
-
 # Mitchell Hughes
 # 31/03/2026
-
-# ==================================
 # Notes:
 # ================================== 
 # - This module is responsible for ingesting data from various sources, validating it, and standardising it for use in the ML pipeline.
