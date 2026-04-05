@@ -16,6 +16,10 @@ class TextCleaner:
         self.__data = self.__data.dropna(subset=[*columns])
         return self
 
+    def pipe(self):
+        self = self.remove_duplicates().remove_null()
+        return self.get_data()
+
 
 if __name__ == '__main__':
     from src.utils.paths import RAW_FILE
