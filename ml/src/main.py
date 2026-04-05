@@ -10,7 +10,7 @@ class Bootstrap:
         from src.preprocessing.text_cleaning import TextCleaner
         df = ingest_data(RAW_FILE)
         tp = TextCleaner(df)
-        tp = tp.select_column_names(['partcondition', 'discrepancy'])
+        tp = tp.remove_duplicates().remove_null()
         print(tp.get_data())
 
 

@@ -8,16 +8,17 @@ class TextCleaner:
     def get_data(self) -> pd.DataFrame:
         return self.__data
     
-    def get_column_names(self) -> list[str]:
-        return list(self.__data.columns)
-    
-    def select_column_names(self, select_columns: list[str]) -> 'TextCleaner':
-        self.__data = self.__data[[column for column in select_columns]]
+    def remove_duplicates(self, columns: list[str] = ['discrepancy']) -> 'TextCleaner':
+        self.__data = self.__data.drop_duplicates(subset=[*columns])
         return self
+
+    def remove_null(self, columns: list[str] = ['discrepancy']) -> 'TextCleaner':
+        self.__data = self.__data.dropna(subset=[*columns])
+        return self
+
 
 if __name__ == '__main__':
     from src.utils.paths import RAW_FILE
     df = pd.read_csv(RAW_FILE)
     tp = TextCleaner(df)
-    tp = tp.select_column_names(['PartCondition', 'Discrepancy'])
-    print(tp.get_data())
+    tp = tp.remove_duplicates().remove_null()
