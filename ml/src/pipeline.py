@@ -7,18 +7,25 @@
 import pandas as pd
 
 # import modules
-from ingestion import ingest_data
-from preprocessing.text_cleaning import TextCleaner
-from preprocessing import TextTokenizer
-from features import FeatureEngineer
+from src.ingestion import ingest_data
+from src.pre_processing.text_cleaning import TextCleaner
+from src.preprocessing import ModernBERTTokenizer
+from src.features import FeatureEngineer
+
+from src.utils.paths import RAW_FILE
 
 # Pipeline Function (runs whole pipeline end-to-end)
-def run_pipeline(file_path: str):
+def run_pipeline(file_path: str = RAW_FILE):
     # Step 1: Ingest data
+    print('-'*20)
+    print(f'DATA INGESTION')
     df = ingest_data(file_path)
-
-    # Step 2: Clean text data
-        # TODO: add data cleaning module wrapper function.
+    print('-'*20)
+    print(f'DATA CLEANING')
+    text_cleaner = TextCleaner(df)
+    df = text_cleaner.pipe()
+    print(df)
+    print('-'*20)
 
     # Step 3: Text Preprocessing (tokenization for BERT)
         # TODO: add text preprocessing module wrapper function.
