@@ -3,7 +3,7 @@
 # ==================================
 
 # NOTES
-- "This module converts cleaned text data into numerical features for machine learning models (TF-IDF, BoW) and prepares inputs for BERT".
+# - "This module converts cleaned text data into numerical features for machine learning models (TF-IDF, BoW) and prepares inputs for BERT".
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 
 # Import previous pipeline modules
 from ml.src.ingestion import ingest_data
-from ml.src.data_cleaning.data_cleaner import DataCleaner
+from ml.src.preprocessing.text_cleaning import TextCleaner as DataCleaner
 
 
 class FeatureEngineer:
