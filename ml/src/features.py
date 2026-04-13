@@ -3,33 +3,26 @@
 # ==================================
 
 # NOTES
-# - "This module converts cleaned text data into numerical features for machine learning models (TF-IDF, BoW) and prepares inputs for BERT".
+# - Converts cleaned text into numerical features (TF-IDF, BoW)
+# - Prepares inputs for BERT
+# - Includes merging of part_name + discrepancy for richer context
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 
 # Import previous pipeline modules
-from src.ingestion import ingest_data
-from src.pre_processing.text_cleaning import TextCleaner as DataCleaner
+from ml.src.ingestion import ingest_data
+from ml.src.pre_processing.text_cleaning import TextCleaner as DataCleaner
 
 
 class FeatureEngineer:
     """
-    This class performs feature engineering on text data.
-    It converts text into numerical representations and encodes labels.
+    Performs feature engineering on text data.
+    Converts text into numerical representations and encodes labels.
     """
 
     def __init__(self, df: pd.DataFrame, text_column: str, label_column: str):
-        """
-        Initialize the FeatureEngineer with dataset and column names.
-
-        Parameters:
-        df: cleaned dataframe from preprocessing
-        text_column: column containing text data (e.g., 'discrepancy')
-        label_column: target column for classification
-        """
-
         # Create a copy of the dataset to avoid modifying original data
         self.df = df.copy()
 
@@ -55,8 +48,24 @@ class FeatureEngineer:
         # Replace missing labels with 'unknown'
         self.df[self.label_column] = self.df[self.label_column].fillna("unknown")
 
-        # Extract text and labels
-        self.texts = self.df[self.text_column]
+        #===========================
+        # Merge part_name + discrepancy
+        #===========================
+        if "part_name" in self.df.columns:
+            self.df["part_name"] = self.df["part_name"].fillna("").astype(str)
+
+            self.df["combined_text"] = (
+                "Part: " + self.df["part_name"] +
+                " | Issue: " + self.df[self.text_column]
+            )
+
+            self.texts = self.df["combined_text"]
+
+        else:
+            # fallback if part_name not available
+            self.texts = self.df[self.text_column]
+    
+        # Labels
         self.labels = self.df[self.label_column]
 
         # Initialize label encoder
@@ -122,7 +131,7 @@ class FeatureEngineer:
         return self.texts.tolist(), self.y
 
     # ==================================
-    # Full Feature Engineering Pipeline
+    # Full Pipeline
     # ==================================
     def process(self, method="tfidf", max_features=5000):
         """
@@ -173,7 +182,11 @@ if __name__ == "__main__":
         # STEP 2: DATA CLEANING
         # =========================
         cleaner = DataCleaner(df)
-        df_clean = cleaner.process("discrepancy").get_data()
+
+        # Run full cleaning pipeline (duplicates + nulls)
+        df_clean = cleaner.pipe()
+
+        print(dir(cleaner))
         print("Cleaning completed")
 
         # =========================
@@ -198,7 +211,9 @@ if __name__ == "__main__":
 
         # BERT-ready inputs
         texts, labels = fe.get_bert_inputs()
-        print("\nBERT sample:", texts[:2])
+
+        print("\nSample combined text:")
+        print(texts[:2])
 
     except Exception as e:
         print("Error:", e)
