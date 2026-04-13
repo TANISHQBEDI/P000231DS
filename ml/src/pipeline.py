@@ -2,30 +2,46 @@
 # Pipeline Module
 # ==================================
 
-# basic pipeline
-
 import pandas as pd
 
-# import modules
-from src.ingestion import ingest_data
-from src.pre_processing.text_cleaning import TextCleaner
-from src.preprocessing import ModernBERTTokenizer
-from src.features import FeatureEngineer
+from ml.src.ingestion import ingest_data
+from ml.src.pre_processing.text_cleaning import TextCleaner
+from ml.src.features import FeatureEngineer
+from ml.src.utils.paths import RAW_FILE
 
-from src.utils.paths import RAW_FILE
-
-# Pipeline Function (runs whole pipeline end-to-end)
 def run_pipeline(file_path: str = RAW_FILE):
-    # Step 1: Ingest data
+    # =========================
+    # STEP 1: INGESTION
+    # =========================
     print('-'*20)
-    print(f'DATA INGESTION')
-    df = ingest_data(file_path)
+    print('DATA INGESTION')
+    df = ingest_data(str(RAW_FILE))
+
+    # =========================
+    # STEP 2: CLEANING
+    # =========================
     print('-'*20)
-    print(f'DATA CLEANING')
-    text_cleaner = TextCleaner(df)
-    df = text_cleaner.pipe()
-    print(df)
+    print('DATA CLEANING')
+    cleaner = TextCleaner(df)
+    df = cleaner.pipe()
+
+    # =========================
+    # STEP 3: FEATURE ENGINEERING
+    # =========================
     print('-'*20)
+    print('FEATURE ENGINEERING')
+
+    label_column = "partcondition"
+    fe = FeatureEngineer(df, "discrepancy", label_column)
+
+    X, y = fe.process(method="tfidf")
+
+    print('-'*20)
+    print("Pipeline completed")
+    print('-'*20)
+    
+    return X, y
+
 
     # Step 3: Text Preprocessing (tokenization for BERT)
         # TODO: add text preprocessing module wrapper function.
@@ -34,4 +50,8 @@ def run_pipeline(file_path: str = RAW_FILE):
         # TODO: add feature engineering module wrapper function.
 
 
-    return df
+# =========================
+# RUN PIPELINE
+# =========================
+if __name__ == "__main__":
+    run_pipeline()
