@@ -5,7 +5,7 @@ class Bootstrap:
     #     pass
 
     def run():
-        from src import pipeline
+        from src.app import pipeline
         pipeline.run_pipeline()
 
 

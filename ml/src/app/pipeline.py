@@ -4,10 +4,10 @@
 
 import pandas as pd
 
-from ml.src.ingestion import ingest_data
-from ml.src.pre_processing.text_cleaning import TextCleaner
-from ml.src.features import FeatureEngineer
-from ml.src.utils.paths import RAW_FILE
+from src.ingestion.ingest import ingest_data
+from src.preprocessing.text_cleaning import TextCleaner
+from src.model.features import FeatureEngineer
+from src.utils.paths import RAW_FILE
 
 def run_pipeline(file_path: str = RAW_FILE):
     # =========================

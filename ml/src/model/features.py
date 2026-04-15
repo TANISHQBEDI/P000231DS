@@ -12,8 +12,8 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 
 # Import previous pipeline modules
-from ml.src.ingestion import ingest_data
-from ml.src.pre_processing.text_cleaning import TextCleaner as DataCleaner
+from src.ingestion.ingest import ingest_data
+from src.preprocessing.text_cleaning import TextCleaner as DataCleaner
 
 
 class FeatureEngineer:
