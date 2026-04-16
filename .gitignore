@@ -1,5 +1,7 @@
 .vscode
 venv/
+.venv/
+requirements.txt
 
 .DS_Store
 
