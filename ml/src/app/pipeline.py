@@ -24,6 +24,7 @@ def run_pipeline(file_path: str = RAW_FILE):
     print('DATA CLEANING')
     cleaner = TextCleaner(df)
     df = cleaner.pipe()
+    print(df[['discrepancy', 'discrepancy_clean']])
 
     # =========================
     # STEP 3: FEATURE ENGINEERING
