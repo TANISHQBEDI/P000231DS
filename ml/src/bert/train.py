@@ -9,7 +9,7 @@
 # - The output will be the trained model, a list of average loss values for each epoch
 # - The model will be saved to a file using `save_model`. It is currently set to save after all epochs are finished.
 
-import os
+from pathlib import Path
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
@@ -19,8 +19,8 @@ from torch.optim import AdamW
 # Configuration
 # ==================================
 
-# TODO: Update this path to where you want to save the trained models
-MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), "../models/")
+MODEL_SAVE_PATH = Path(__file__).resolve().parent.parent / "models"
+MODEL_SAVE_PATH.mkdir(parents=True, exist_ok=True)  # Create the directory if it doesn't exist
 
 
 # ==================================

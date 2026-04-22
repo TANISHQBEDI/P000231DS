@@ -5,13 +5,8 @@
 # Notes:
 # ================================== 
 # - This module is responsible for evaluating the performance of the BERT model after training.
-# - The main function is `evaluate_model` (line 31), which will run through the entire evaluation process.
+# - The main function is `evaluate_model`, which will run through the entire evaluation process.
 # - The output will be the evaluation metrics (accuracy and F1 score) for the model as a dictionary
-
-
-import pandas as pd
-import numpy as np
-import os
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
