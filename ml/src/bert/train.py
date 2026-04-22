@@ -5,18 +5,23 @@
 # Notes:
 # ================================== 
 # - This module is responsible for training the BERT model using the tokenised data.
-# - The main function is `train_model` (line 43), which will run through the entire training process.
+# - The main function is `train_model`, which will run through the entire training process.
 # - The output will be the trained model, a list of average loss values for each epoch
-# - The model will be saved to a file using `save_model`
+# - The model will be saved to a file using `save_model`. It is currently set to save after all epochs are finished.
 
-import pandas as pd
-import numpy as np
 import os
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from torch.optim import AdamW
+
+# ==================================
+# Configuration
+# ==================================
+
+# TODO: Update this path to where you want to save the trained models
+MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), "../models/")
+
 
 # ==================================
 # Create DataLoader
@@ -97,8 +102,8 @@ def train_model(model, input_ids, attention_mask, labels, batch_size=16, epochs=
 
         print(f"Epoch {epoch+1}/{epochs}- Loss: {avg_loss:.4f}" )
 
-        #  TODO: Update model save path, and function usage below
-        # save_model(model)
+    # Save the model after training is complete
+    save_model(model)
 
     return model, loss_history
 
@@ -106,15 +111,18 @@ def train_model(model, input_ids, attention_mask, labels, batch_size=16, epochs=
 # Save Model
 # ==================================
 
-# TODO: Update save path and frequency
-def save_model(model, path = "model.pt"):
+def save_model(model, path = MODEL_SAVE_PATH, filename=None):
     """Save the trained BERT model to a file.
     Args:
         model (torch.nn.Module): The trained BERT model to save.
-        path (str, optional): The file path to save the model to. Defaults to "model.pt".
+        path (str, optional): The file path to save the model to. Defaults to MODEL_SAVE_PATH which is defined at the top of this script.
+        filename (str, optional): The name of the file to save the model to. If not provided, a timestamp will be used.
     Returns:
         None
     """
+    # Save the model state using timestamp filename unless a name is provided
+    if filename is None:
+        filename = f"_{torch.datetime.now().strftime('%Y%m%d_%H%M%S')}.pt"
 
-    torch.save(model.state_dict(), path)
-    print(f"Model saved to {path}")
+    torch.save(model.state_dict(), path + filename)
+    print(f"Model saved to {path + filename}")
