@@ -33,7 +33,7 @@ def run_pipeline(file_path: str = RAW_FILE):
     print('FEATURE ENGINEERING')
 
     label_column = "partcondition"
-    fe = FeatureEngineer(df, "discrepancy", label_column)
+    fe = FeatureEngineer(df, "discrepancy_clean", label_column)
 
     X, y = fe.process(method="tfidf")
 
