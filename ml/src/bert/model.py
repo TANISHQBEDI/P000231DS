@@ -77,8 +77,9 @@ class BertClassifier(nn.Module):
 def load_model(
     model_name="bert-base-uncased",
     num_labels=2,
-    device="cpu"
+    device=None
 ):
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     """
     Load model and move to device
     """
@@ -98,12 +99,66 @@ def save_checkpoint(model, path="bert_model.pt"):
     Save model weights
     """
     torch.save(model.state_dict(), path)
+    print(f"Model saved to {path}")
 
 
-def load_checkpoint(model, path="bert_model.pt", device="cpu"):
-    """
-    Load model weights
-    """
+def load_checkpoint(
+    path="bert_model.pt",
+    model_name="bert-base-uncased",
+    num_labels=2,
+    device=None
+):
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = BertClassifier(
+        model_name=model_name,
+        num_labels=num_labels
+    )
+
     model.load_state_dict(torch.load(path, map_location=device))
     model.to(device)
+
+    print(f"Model loaded from {path}")
+
     return model
+
+# ==================================
+# Optimizer
+# ==================================
+
+def get_optimizer(model, lr=5e-5):
+    from torch.optim import AdamW
+    return AdamW(model.parameters(), lr=lr)
+
+# ==================================
+# TEST BLOCK
+# ==================================
+
+if __name__ == "__main__":
+    print("Testing BERT model...")
+
+    # Dummy input
+    batch_size = 2
+    seq_length = 10
+    num_labels = 3
+
+    input_ids = torch.randint(0, 1000, (batch_size, seq_length))
+    attention_mask = torch.ones((batch_size, seq_length))
+
+    # Load model
+    model = load_model(num_labels=num_labels)
+
+    # Forward pass
+    outputs = model(input_ids, attention_mask)
+
+    print("Output shape:", outputs.shape)
+
+    # Test optimizer
+    optimizer = get_optimizer(model)
+    print("Optimizer created:", type(optimizer))
+
+    # Test save/load
+    save_checkpoint(model, "test_model.pt")
+    model = load_checkpoint("test_model.pt", num_labels=num_labels)
+
+    print("All tests passed ")
