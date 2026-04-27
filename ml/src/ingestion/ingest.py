@@ -82,9 +82,7 @@ def validate_data(df: pd.DataFrame) -> None:
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
     
-    # Check for null values in required columns
-    if df[REQUIRED_COLUMNS].isnull().any().any():
-        raise ValueError("Some required columns contain null values. No valid data to process.")
+    # Nulls are handled in ingest_data by dropping invalid rows.
     
 
 # ==================================
@@ -155,8 +153,16 @@ def ingest_data(file_path: str) -> pd.DataFrame:
     # Load the data
     df = load_data(file_path)
 
-    # Validate the data
+    # Validate basic structure and required columns
     validate_data(df)
+
+    # Keep only rows that contain all required values.
+    # This prevents a full pipeline failure when only a subset is invalid.
+    df = df.dropna(subset=REQUIRED_COLUMNS)
+    if df.empty:
+        raise ValueError(
+            "Some required columns contain null values. No valid data to process."
+        )
 
     # Standardise column names
     df = standardise_columns(df)
