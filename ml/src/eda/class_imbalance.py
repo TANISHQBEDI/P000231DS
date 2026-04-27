@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 from typing import Any
@@ -257,14 +257,14 @@ class ClassImbalanceEDA:
 
         distribution_path = out_dir / "class_distribution.csv"
         summary_path = out_dir / "class_imbalance_summary.json"
-        plot_result = self.export_distribution_plots(least_k=least_k)
+        plot_result = self.export_distribution_plots(output_dir=out_dir / "plots", least_k=least_k)
         plot_paths = plot_result["paths"]
         plot_config = plot_result["config"]
 
         distribution.to_csv(distribution_path, index=False)
 
         payload: dict[str, Any] = {
-            "summary": summary.__dict__,
+            "summary": asdict(summary),
             "recommendations": self.recommendations(),
             "future_strategy_options": self.future_strategy_options(),
             "plot_paths": {
@@ -295,7 +295,7 @@ def analyze_class_imbalance(
     summary = analyzer.summary()
 
     result: dict[str, Any] = {
-        "summary": summary.__dict__,
+        "summary": asdict(summary),
         "distribution": analyzer.class_distribution(include_percent=True),
         "recommendations": analyzer.recommendations(),
         "future_strategy_options": analyzer.future_strategy_options(),

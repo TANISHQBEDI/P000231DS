@@ -6,15 +6,17 @@ from src.eda import analyze_class_imbalance
 from src.ingestion.ingest import ingest_data
 from src.preprocessing.text_cleaning import TextCleaner
 from src.model.features import FeatureEngineer
-from src.utils.paths import PROCESSED_DIR, RAW_FILE
+from src.utils.paths import RAW_FILE, dataset_report_dir
 
 def run_pipeline(file_path: str = RAW_FILE):
+    file_path = str(file_path)
+
     # =========================
     # STEP 1: INGESTION
     # =========================
     print('-'*20)
     print('DATA INGESTION')
-    df = ingest_data(str(file_path))
+    df = ingest_data(file_path)
 
     # =========================
     # STEP 2: CLEANING
@@ -33,7 +35,7 @@ def run_pipeline(file_path: str = RAW_FILE):
 
     label_column = "partcondition"
     least_k = 10
-    report_dir = PROCESSED_DIR / "eda"
+    report_dir = dataset_report_dir(file_path)
     eda_result = analyze_class_imbalance(
         df=df,
         label_column=label_column,
