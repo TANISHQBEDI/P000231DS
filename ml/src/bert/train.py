@@ -102,8 +102,8 @@ def train_model(model, input_ids, attention_mask, labels, batch_size=16, epochs=
 
         print(f"Epoch {epoch+1}/{epochs}- Loss: {avg_loss:.4f}" )
 
-    # Save the model after training is complete
-    save_model(model)
+    #  Uncomment to Save the model after training is complete
+    # save_model(model)
 
     return model, loss_history
 
