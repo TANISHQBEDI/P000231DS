@@ -126,3 +126,109 @@ def save_model(model, path = MODEL_SAVE_PATH, filename=None):
 
     torch.save(model.state_dict(), path + filename)
     print(f"Model saved to {path + filename}")
+
+def train_model(model, input_ids, attention_mask, labels, batch_size=16, epochs=3, lr=5e-5, device=None):
+
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    model.train()
+
+    dataloader = create_dataloader(input_ids, attention_mask, labels, batch_size)
+
+    optimiser = AdamW(model.parameters(), lr=lr)
+    criterion = nn.CrossEntropyLoss()
+
+    loss_history = []
+
+    # START PRINT
+    print("\n===== TRAINING STARTED =====")
+    print(f"Total samples: {len(input_ids)}")
+    print(f"Batch size: {batch_size}")
+    print(f"Epochs: {epochs}")
+    print("===========================\n")
+
+    for epoch in range(epochs):
+        total_loss = 0
+
+        # progress part
+        for i, batch in enumerate(dataloader):
+            if i % 10 == 0:
+                print(f"Processing batch {i}/{len(dataloader)}")
+            batch_input_ids, batch_attention_mask, batch_labels = [b.to(device) for b in batch]
+
+            logits = model(
+                input_ids=batch_input_ids,
+                attention_mask=batch_attention_mask
+            )
+
+            loss = criterion(logits, batch_labels)
+
+            loss.backward()
+            optimiser.step()
+            optimiser.zero_grad()
+
+            total_loss += loss.item()
+
+        avg_loss = total_loss / len(dataloader)
+        loss_history.append(avg_loss)
+
+        print(f"[Epoch {epoch+1}/{epochs}] Average Loss: {avg_loss:.4f}")
+
+    # END PRINT
+    print("\n===== TRAINING COMPLETE =====")
+    print("Loss history:", loss_history)
+    print("============================\n")
+
+    return model, loss_history
+
+if __name__ == "__main__":
+    print("Loading data...")
+
+    from ml.src.bert.tokenizer import load_bert_tokenizer_inputs
+    from ml.src.bert.model import load_model
+    from transformers import AutoTokenizer
+
+    # Load raw text + labels
+    texts, labels, metadata = load_bert_tokenizer_inputs()
+
+    # Limit data (important — your dataset is huge)
+    texts = texts[:1000]
+    labels = labels[:1000]
+
+    print(f"Loaded {len(texts)} samples")
+
+    # Tokenize
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+    encoded = tokenizer(
+        texts,
+        padding=True,
+        truncation=True,
+        max_length=64,
+        return_tensors="pt"
+    )
+
+    input_ids = encoded["input_ids"]
+    attention_mask = encoded["attention_mask"]
+
+    import torch
+    labels = torch.tensor(labels, dtype=torch.long)
+
+    print("Initializing model...")
+
+    num_labels = max(labels.tolist()) + 1
+    model = load_model(num_labels=num_labels)
+
+    print("Training started...")
+
+    model, history = train_model(
+        model,
+        input_ids,
+        attention_mask,
+        labels,
+        batch_size=32,
+        epochs=1
+    )
+
+    print("Training complete")
+    print("Loss history:", history)
