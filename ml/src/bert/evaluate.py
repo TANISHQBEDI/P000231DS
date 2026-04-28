@@ -35,7 +35,7 @@ def create_dataloader(input_ids, attention_mask, labels, batch_size = 16):
 # ==================================
 # Evaluation Function
 # ==================================
-def evaluate_model(model, input_ids, attention_mask, labels, batch_size = 16, device="none"):
+def evaluate_model(model, input_ids, attention_mask, labels, batch_size = 16, device=None):
     """
     Evaluate the performance of the BERT model on the evaluation dataset.
     Args:
@@ -86,3 +86,50 @@ def evaluate_model(model, input_ids, attention_mask, labels, batch_size = 16, de
         print(f"Evaluation Results: Accuracy = {accuracy:.4f}, F1 Score = {f1:.4f}")
 
         return results
+    
+    print("\nRunning evaluation.................")
+    results = evaluate_model(
+        model,
+        input_ids,
+        attention_mask,
+        labels,
+        batch_size=32
+    )
+
+    print("Final Results:", results)
+
+if __name__ == "__main__":
+    print("Running evaluation...")
+
+    from ml.src.bert.tokenizer import load_bert_tokenizer_inputs
+    from ml.src.bert.model import load_model
+
+    import torch
+    from transformers import AutoTokenizer
+
+    # Load data
+    texts, labels, metadata = load_bert_tokenizer_inputs()
+
+    # Reduce size for testing
+    texts = texts[:200]
+    labels = labels[:200]
+
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+    encoded = tokenizer(
+        texts,
+        padding=True,
+        truncation=True,
+        max_length=64,
+        return_tensors="pt"
+    )
+
+    input_ids = encoded["input_ids"]
+    attention_mask = encoded["attention_mask"]
+    labels = torch.tensor(labels, dtype=torch.long)
+
+    num_labels = max(labels.tolist()) + 1
+    model = load_model(num_labels=num_labels)
+
+    # NOTE: this is untrained model (just for testing)
+    evaluate_model(model, input_ids, attention_mask, labels)
