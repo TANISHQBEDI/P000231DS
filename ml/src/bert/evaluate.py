@@ -1,9 +1,9 @@
-# =================================
+# ==================================
 # Evaluation Module
 # Mitchell Hughes
 # 16/04/2026
 # Notes:
-# ================================= 
+# ==================================
 # - This module is responsible for evaluating the performance of the both Bert and other models after training.
 # - The main function is `evaluate_model`, which will run through the entire evaluation process.
 # - The output will be the evaluation metrics (accuracy and F1 score) for the model as a dictionary
