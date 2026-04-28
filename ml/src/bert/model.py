@@ -35,6 +35,7 @@ class BertClassifier(nn.Module):
         super(BertClassifier, self).__init__()
 
         # Load pretrained BERT (Transformer backbone) 
+        self.model_name = model_name
         self.bert = AutoModel.from_pretrained(model_name)
 
         # Extract hidden size from BERT config
@@ -106,7 +107,12 @@ def save_checkpoint(model, path="bert_model.pt"):
     """
     Save model weights for reuse or deployment
     """
-    torch.save(model.state_dict(), path)
+    torch.save({ 
+        "model_state_dict": model.state_dict(), 
+        "model_name": model.model_name,
+        "num_labels": model.classifier.out_features
+        }, path)
+    
     print(f"Model saved to {path}")
 
 # ==================================
@@ -124,12 +130,14 @@ def load_checkpoint(
 
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = BertClassifier(
-        model_name=model_name,
-        num_labels=num_labels
+    checkpoint = torch.load(path, map_location=device)
+    
+    model = BertClassifier( 
+        model_name=checkpoint["model_name"],
+        num_labels=checkpoint["num_labels"]
     )
 
-    model.load_state_dict(torch.load(path, map_location=device))
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.to(device)
 
     print(f"Model loaded from {path}")
