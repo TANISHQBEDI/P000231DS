@@ -1,0 +1,120 @@
+{
+  "CORRODED": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "CORRODED"
+  },
+  "CRACKED": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "CRACKED"
+  },
+  "DELAMINATED": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "DELAMINATED"
+  },
+  "WORN": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "WORN"
+  },
+  "DAMAGED": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "DAMAGED"
+  },
+  "BROKEN": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "DAMAGED"
+  },
+  "DENTED": {
+    "level1": "PHYSICAL_DAMAGE",
+    "level2": "DAMAGED"
+  },
+
+  "FAULTY": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+  "FAILED": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+  "INOPERATIVE": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+  "MALFUNCTIONED": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+  "DEFECTIVE": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+  "FAULTED": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FAULTY"
+  },
+
+  "FALSE ACTIVATION": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "FALSE_ACTIVATION"
+  },
+  "DISCHARGED": {
+    "level1": "FUNCTIONAL_FAILURE",
+    "level2": "DISCHARGED"
+  },
+
+  "LEAKING": {
+    "level1": "SYSTEM_STATE",
+    "level2": "LEAKING"
+  },
+  "LOW PRESSURE": {
+    "level1": "SYSTEM_STATE",
+    "level2": "LOW_PRESSURE"
+  },
+  "ODOR": {
+    "level1": "SYSTEM_STATE",
+    "level2": "ODOR"
+  },
+  "DIRTY": {
+    "level1": "SYSTEM_STATE",
+    "level2": "DIRTY"
+  },
+
+  "NONE": {
+    "level1": "INSPECTION_STATUS",
+    "level2": "NO_FAULT_FOUND"
+  },
+  "UNKNOWN": {
+    "level1": "INSPECTION_STATUS",
+    "level2": "UNKNOWN"
+  },
+  "NO TEST": {
+    "level1": "INSPECTION_STATUS",
+    "level2": "NOT_TESTED"
+  },
+
+  "LOOSE": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "LOOSE"
+  },
+  "OUT OF ADJUST": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "LOOSE"
+  },
+  "EXCESS PLAY": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "LOOSE"
+  },
+  "UNSECURE": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "LOOSE"
+  },
+  "DETACHED": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "LOOSE"
+  },
+
+  "MISSING": {
+    "level1": "STRUCTURAL_ISSUE",
+    "level2": "MISSING"
+  }
+}

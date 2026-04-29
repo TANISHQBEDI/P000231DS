@@ -1,14 +1,12 @@
 
 
 class Bootstrap:
-    # def __init__(self):
-    #     pass
-
-    def run():
+    @staticmethod
+    def run() -> None:
         from src.app import pipeline
-        pipeline.run_pipeline()
+
+        pipeline.run_training()
 
 
-if __name__ == '__main__':
-    app = Bootstrap
-    app.run()
+if __name__ == "__main__":
+    Bootstrap.run()
