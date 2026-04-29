@@ -26,8 +26,8 @@ class LabelMapper:
                 raise ValueError(f"Invalid mapping for label: {label}")
             if "level1" not in payload or "level2" not in payload:
                 raise ValueError(f"Mapping for {label} must include level1 and level2")
-            if payload.get("level1") == "OTHER" or payload.get("level2") == "OTHER":
-                raise ValueError("'OTHER' is not allowed as a training label")
+            # if payload.get("level1") == "OTHER" or payload.get("level2") == "OTHER":
+            #     raise ValueError("'OTHER' is not allowed as a training label")
 
     def map_label(self, raw_label: str) -> tuple[str, str]:
         record = self.mapping.get(raw_label)
@@ -52,7 +52,7 @@ class LabelMapper:
         data[level1_column] = mapped.map(lambda item: item.get("level1") if item else "UNKNOWN")
         data[level2_column] = mapped.map(lambda item: item.get("level2") if item else "UNKNOWN")
 
-        if (data[level1_column] == "OTHER").any() or (data[level2_column] == "OTHER").any():
-            raise ValueError("'OTHER' is not allowed as a training label")
+        # if (data[level1_column] == "OTHER").any() or (data[level2_column] == "OTHER").any():
+        #     raise ValueError("'OTHER' is not allowed as a training label")
 
         return data

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Callable
 
+import numpy as np
+
 import joblib
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LogisticRegression
@@ -23,10 +25,17 @@ class Level2Classifier:
             subset_features = features[indices]
             subset_labels = [level2_labels[i] for i in indices]
 
+            unique_labels = sorted(set(subset_labels))
+
             encoder = LabelEncoder()
             encoded_labels = encoder.fit_transform(subset_labels)
-            model = self.model_factory()
-            model.fit(subset_features, encoded_labels)
+
+            if len(unique_labels) < 2:
+                model = _ConstantClassifier()
+                model.fit(subset_features, encoded_labels)
+            else:
+                model = self.model_factory()
+                model.fit(subset_features, encoded_labels)
 
             self.models[level1] = model
             self.label_encoders[level1] = encoder
@@ -71,3 +80,16 @@ class Level2Classifier:
         classifier.models = payload.get("models", {})
         classifier.label_encoders = payload.get("label_encoders", {})
         return classifier
+
+
+class _ConstantClassifier:
+    def __init__(self) -> None:
+        self._class_count = 1
+
+    def fit(self, features, labels) -> "_ConstantClassifier":
+        self._class_count = len(set(labels)) or 1
+        return self
+
+    def predict_proba(self, features):
+        rows = features.shape[0]
+        return np.ones((rows, self._class_count), dtype=float)

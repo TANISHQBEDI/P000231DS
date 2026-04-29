@@ -11,6 +11,12 @@ class Level1Classifier:
         self.model = model or LogisticRegression(max_iter=1000, multi_class="auto")
 
     def fit(self, features, labels: list[str]) -> "Level1Classifier":
+        unique_labels = sorted(set(labels))
+        if len(unique_labels) < 2:
+            raise ValueError(
+                "Level1 classifier requires at least 2 classes. "
+                f"Found: {unique_labels}"
+            )
         self.model.fit(features, labels)
         return self
 
