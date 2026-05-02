@@ -21,3 +21,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tools.setuptools.package-data]
+aircraft_nlp = ["config/*.json"]
