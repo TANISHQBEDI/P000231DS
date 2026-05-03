@@ -63,9 +63,11 @@ def run_pipeline(file_path: str = None):
     print("\n" + "="*80)
     print("SPRINT 1-2: DATA PREPARATION")
     print("="*80)
-====================================
+
+#====================================
 # Pipeline Module
 # ==================================
+
 
 from src.eda import analyze_class_imbalance
 from src.ingestion.ingest import ingest_data
@@ -254,7 +256,7 @@ def run_sprint3_pipeline(
         raise
     
     # Step 3: EDA
-    print("\n 3️.Analyzing class distribution...")
+    print("\n 3.Analyzing class distribution...")
     try:
         eda_result = analyze_class_imbalance(
             df=df,
@@ -275,9 +277,19 @@ def run_sprint3_pipeline(
     from sklearn.preprocessing import LabelEncoder
     le = LabelEncoder()
     labels_full = le.fit_transform(df[label_column])
+    
     label_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
     print("\nLabel mapping created ({len(label_mapping)} classes)")
     print(label_mapping)
+
+    if 'eda_result' in locals():
+        print("\n EDA Summary:")
+        summary = eda_result["summary"]
+        print(summary)
+        
+        print("\n Recommendations:")
+        for rec in eda_result["recommendations"]:
+            print("-", rec)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # PHASE 2: BRANCH A - Traditional ML (SVM + TF-IDF)
@@ -446,56 +458,7 @@ if __name__ == "__main__":
     # Option 2: Run complete Sprint 3 (Split & Merge) - RECOMMENDED
     best_model_name, best_metrics, comparison_df = run_sprint3_pipeline()
 
-    eda_result = analyze_class_imbalance(
-        df=df,
-        label_column=label_column,
-        output_dir=report_dir,
-        least_k=least_k,
-    )
-
-    summary = eda_result["summary"]
-    print(
-        f"Imbalance level: {summary['imbalance_level']} | "
-        f"ratio: {summary['imbalance_ratio']} | "
-        f"majority: {summary['majority_class']} ({summary['majority_count']}) | "
-        f"minority: {summary['minority_class']} ({summary['minority_count']})"
-    )
-
-    print('Recommendations:')
-    for rec in eda_result["recommendations"]:
-        print(f"- {rec}")
-
-    plot_config = eda_result.get("plot_config")
-    if isinstance(plot_config, dict):
-        print(
-            f"Least-k plot requested: {plot_config['least_k_requested']} | "
-            f"used: {plot_config['least_k_used']} of {plot_config['total_classes']} classes"
-        )
-
-    if "report_paths" in eda_result:
-        print('EDA artifacts:')
-        for name, path in eda_result["report_paths"].items():
-            if name == "plot_config":
-                continue
-            print(f"- {name}: {path}")
-
-    # =========================
-    # STEP 4: FEATURE ENGINEERING
-    # =========================
-    print('-'*20)
-    print('FEATURE ENGINEERING')
-
-    fe = FeatureEngineer(df, "discrepancy_clean", label_column)
-
-    X, y = fe.process(method="tfidf")
-
-    print('-'*20)
-    print("Pipeline completed")
-    print('-'*20)
     
-    return X, y
-
-
     # Step 3: Text Preprocessing (tokenization for BERT)
         # TODO: add text preprocessing module wrapper function.
     
