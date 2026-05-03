@@ -11,23 +11,12 @@
 import pandas as pd
 from datetime import datetime
 import os
-from pathlib import Path
+from src.utils.paths import RAW_DIR, RAW_FILE
 
 
 # ==================================
 # Configuration
 # ==================================
-
-# Configure Paths
-CURRENT_DIR = Path(__file__).resolve().parent
-
-# Path for ML directory (assuming this script is in ml/src/)
-ML_DIR = CURRENT_DIR.parent
-
-# Data Directories
-RAW_DATA_DIR = ML_DIR / 'data' / 'raw'
-CLEAN_DATA_DIR = ML_DIR / 'data' / 'clean'
-PROCESSED_DATA_DIR = ML_DIR / 'data' / 'processed'
 
 # Allowed file extensions for ingestion
 ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
@@ -93,9 +82,7 @@ def validate_data(df: pd.DataFrame) -> None:
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
     
-    # Check for null values in required columns
-    if df[REQUIRED_COLUMNS].isnull().any().any():
-        raise ValueError("Some required columns contain null values. No valid data to process.")
+    # Nulls are handled in ingest_data by dropping invalid rows.
     
 
 # ==================================
@@ -136,12 +123,12 @@ def save_raw_copy(df: pd.DataFrame, original_filename: str) -> str:
     Saves a timestamped copy of ingested data into /data/raw/
     """
 
-    os.makedirs(RAW_DATA_DIR, exist_ok=True)
+    os.makedirs(RAW_DIR, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{os.path.basename(original_filename)}"
 
-    save_path = os.path.join(RAW_DATA_DIR, filename)
+    save_path = RAW_DIR / filename
 
     df.to_csv(save_path, index=False)
 
@@ -166,8 +153,16 @@ def ingest_data(file_path: str) -> pd.DataFrame:
     # Load the data
     df = load_data(file_path)
 
-    # Validate the data
+    # Validate basic structure and required columns
     validate_data(df)
+
+    # Keep only rows that contain all required values.
+    # This prevents a full pipeline failure when only a subset is invalid.
+    df = df.dropna(subset=REQUIRED_COLUMNS)
+    if df.empty:
+        raise ValueError(
+            "Some required columns contain null values. No valid data to process."
+        )
 
     # Standardise column names
     df = standardise_columns(df)
@@ -187,7 +182,7 @@ if __name__ == "__main__":
     # TODO: Add testing code here to run the ingestion pipeline on a sample file and print the resulting DataFrame.
 
     # Test file path
-    sample_file = RAW_DATA_DIR / 'NLP_Dataset_2026.xlsx' 
+    sample_file = RAW_FILE
 
     try:
         df = ingest_data(sample_file)

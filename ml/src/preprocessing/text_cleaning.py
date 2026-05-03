@@ -75,7 +75,7 @@ class TextCleaner:
         Clean free-text discrepancy values using deterministic rules.
 
         phrase_map:
-            Exact phrase replacements after lowercase normalization.
+            In-text phrase/token replacements after lowercase normalization.
             Example: {"nff": "no fault found"}
 
         regex_rules:
@@ -100,7 +100,15 @@ class TextCleaner:
                 self._basic_normalize(k): self._basic_normalize(v)
                 for k, v in phrase_map.items()
             }
-            cleaned = cleaned.replace(normalized_map)
+            # Apply phrase map inside each text value rather than exact cell matching.
+            phrase_pattern = r'(?<!\\w)(' + '|'.join(
+                sorted((re.escape(k) for k in normalized_map.keys()), key=len, reverse=True)
+            ) + r')(?!\\w)'
+            cleaned = cleaned.str.replace(
+                phrase_pattern,
+                lambda m: normalized_map[m.group(0)],
+                regex=True,
+            )
 
         if regex_rules:
             for pattern, replacement in regex_rules:
