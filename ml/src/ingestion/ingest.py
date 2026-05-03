@@ -13,7 +13,6 @@ from datetime import datetime
 import os
 from src.utils.paths import RAW_DIR, RAW_FILE
 
-
 # ==================================
 # Configuration
 # ==================================
@@ -21,9 +20,11 @@ from src.utils.paths import RAW_DIR, RAW_FILE
 # Allowed file extensions for ingestion
 ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
 
+# Update REQUIRED_COLUMNS to use lower case (after standardization)
+REQUIRED_COLUMNS = ['operatorcontrolnumber','discrepancy']
+
 # TODO: MAY NEED CHANGES
 REQUIRED_COLUMNS = ['OperatorControlNumber','Discrepancy']
-
 
 # ==================================
 # Main Ingestion Function
@@ -57,7 +58,6 @@ def load_data(file_path: str) -> pd.DataFrame:
     except Exception as e:
         raise Exception(f"Error loading file {file_path}: {str(e)}")
 
-
 # ==================================
 # Validation Function
 # ==================================
@@ -73,6 +73,9 @@ def validate_data(df: pd.DataFrame) -> None:
     ValueError: If any required columns are missing.
     """
 
+    # Check if the Data is empty - check for None FIRST
+    if df is None or df.empty: # Check None before accessing .empty attribute
+
     # Check if the Data is empty
     if df.empty or df is None:
         raise ValueError("The Data is empty. No data to validate.")
@@ -83,7 +86,6 @@ def validate_data(df: pd.DataFrame) -> None:
         raise ValueError(f"Missing required columns: {missing_columns}")
     
     # Nulls are handled in ingest_data by dropping invalid rows.
-    
 
 # ==================================
 # Standardisation Function
@@ -112,8 +114,6 @@ def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(how='all')
 
     return df
-
-
 # ==================================
 # Save Raw Data
 # ==================================
@@ -134,7 +134,6 @@ def save_raw_copy(df: pd.DataFrame, original_filename: str) -> str:
 
     return save_path
 
-
 # ==================================
 # Pipeline Wrapper Function
 # ==================================
@@ -152,12 +151,22 @@ def ingest_data(file_path: str) -> pd.DataFrame:
 
     # Load the data
     df = load_data(file_path)
+    
+    # Step 1: Standardise column names
+    df = standardise_columns(df)
+
+    print("Columns after cleaning:", df.columns.tolist())
+
+    # Step 2: Validate basic structure and required columns
 
     # Validate basic structure and required columns
     validate_data(df)
 
     # Keep only rows that contain all required values.
     # This prevents a full pipeline failure when only a subset is invalid.
+
+    df = df.dropna(subset=REQUIRED_COLUMNS) # Now checks lowercase versions
+
     df = df.dropna(subset=REQUIRED_COLUMNS)
     if df.empty:
         raise ValueError(
@@ -171,7 +180,6 @@ def ingest_data(file_path: str) -> pd.DataFrame:
     save_raw_copy(df, original_filename=os.path.basename(file_path))
 
     return df
-
 
 # ==================================
 # Tester
