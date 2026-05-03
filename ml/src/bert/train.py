@@ -21,6 +21,7 @@ from transformers import AutoTokenizer, get_linear_schedule_with_warmup
 from sklearn.model_selection import train_test_split
 
 from src.bert.data_prep import combine_part_condition_label, prepare_bert_splits
+from src.bert.evaluate import evaluate_dataloader
 from src.bert.model import load_model, save_checkpoint
 
 
@@ -62,33 +63,6 @@ def _build_dataloader(
         shuffle=shuffle,
         pin_memory=pin_memory,
     )
-
-
-def _calculate_accuracy(
-    model,
-    data_loader: DataLoader,
-    device: torch.device,
-) -> float:
-    correct_predictions = 0
-    total_predictions = 0
-
-    model.eval()
-    with torch.no_grad():
-        for batch in data_loader:
-            input_ids = batch["input_ids"].to(device)
-            attention_mask = batch["attention_mask"].to(device)
-            labels = batch["labels"].to(device)
-
-            logits = model(input_ids=input_ids, attention_mask=attention_mask)
-            predictions = torch.argmax(logits, dim=1)
-
-            correct_predictions += (predictions == labels).sum().item()
-            total_predictions += labels.size(0)
-
-    model.train()
-    if total_predictions == 0:
-        return 0.0
-    return correct_predictions / total_predictions
 
 
 def _compute_class_weights(labels: list[int], num_labels: int, device: torch.device) -> torch.Tensor:
@@ -249,8 +223,18 @@ def train_model(data: pd.DataFrame):
 
         current_metric_name = evaluation_name if evaluation_loader is not None else "training"
         current_loader = evaluation_loader if evaluation_loader is not None else train_loader
-        current_accuracy = _calculate_accuracy(model, current_loader, device)
-        print(f"Epoch {epoch_index + 1}/{epochs} {current_metric_name} accuracy: {current_accuracy:.2%}")
+        current_metrics = evaluate_dataloader(model, current_loader, device)
+        current_accuracy = current_metrics["accuracy"]
+        current_precision = current_metrics["precision"]
+        current_recall = current_metrics["recall"]
+        current_f1 = current_metrics["f1_score"]
+        print(
+            f"Epoch {epoch_index + 1}/{epochs} {current_metric_name} "
+            f"accuracy: {current_accuracy:.2%}, "
+            f"precision: {current_precision:.2%}, "
+            f"recall: {current_recall:.2%}, "
+            f"f1: {current_f1:.2%}"
+        )
 
         if current_accuracy > best_accuracy:
             best_accuracy = current_accuracy
