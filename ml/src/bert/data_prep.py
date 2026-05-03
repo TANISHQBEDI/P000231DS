@@ -21,6 +21,70 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 
+PART_CONDITION_OTHER_LABEL = "OTHER"
+
+PART_CONDITION_COMBINED_GROUPS: dict[str, tuple[str, ...]] = {
+    "CORRODED": ("CORRODED",),
+    "CRACKED": ("CRACKED",),
+    "FAULTY": (
+        "INOPERATIVE",
+        "FAILED",
+        "MALFUNCTIONED",
+        "FAULTY",
+        "FAULTED",
+        "DEFECTIVE",
+    ),
+    "DAMAGED": ("DAMAGED", "BROKEN", "DENTED"),
+    "LOW PRESSURE": ("LOW PRESSURE",),
+    "MISSING": ("MISSING",),
+    "DELAMINATED": ("DELAMINATED",),
+    "FALSE ACTIVATION": ("FALSE ACTIVATION",),
+    "NONE": ("NONE", "UNKNOWN"),
+    "WORN": ("WORN",),
+    "LEAKING": ("LEAKING",),
+    "ODOR": ("ODOR",),
+    "LOOSE": (
+        "LOOSE",
+        "OUT OF ADJUST",
+        "EXCESS PLAY",
+        "UNSECURE",
+        "DETACHED",
+    ),
+    "NO TEST": ("NO TEST",),
+    "DISCHARGED": ("DISCHARGED",),
+    "DIRTY": ("DIRTY",),
+    PART_CONDITION_OTHER_LABEL: (PART_CONDITION_OTHER_LABEL,),
+}
+
+PART_CONDITION_COMBINED_LABEL_MAP: dict[str, str] = {
+    raw_label: combined_label
+    for combined_label, raw_labels in PART_CONDITION_COMBINED_GROUPS.items()
+    for raw_label in raw_labels
+}
+
+
+def _canonicalize_part_condition(label: Any) -> str:
+    if pd.isna(label):
+        return "UNKNOWN"
+    return " ".join(str(label).split()).upper()
+
+
+def combine_part_condition_label(label: Any) -> str:
+    """
+    Collapse a raw part condition into the consolidated workbook classes.
+
+    Labels not listed in `PART_CONDITION_COMBINED_GROUPS` are assigned to
+    `OTHER`, matching the combined table in LabelCounts_Consolidated.xlsx.
+    """
+    normalized_label = _canonicalize_part_condition(label)
+    if not normalized_label:
+        return ""
+    return PART_CONDITION_COMBINED_LABEL_MAP.get(
+        normalized_label,
+        PART_CONDITION_OTHER_LABEL,
+    )
+
+
 @dataclass
 class BERTDatasetSplits:
     """Container for untokenized BERT dataset splits."""
@@ -48,14 +112,35 @@ class BERTDataPreparer:
         df: pd.DataFrame,
         text_column: str = "discrepancy",
         label_column: str = "partcondition",
-        context_column: str = "part_name",
+        context_column: str = "partname",
+        combine_partcondition: bool = True,
     ) -> None:
         self.df = df.copy()
         self.text_column = text_column
         self.label_column = label_column
-        self.context_column = context_column
+        self.context_column = self._resolve_context_column(context_column)
+        self.combine_partcondition = (
+            combine_partcondition and self._is_part_condition_column(label_column)
+        )
         self.label_encoder = LabelEncoder()
         self.prepared_df: pd.DataFrame | None = None
+
+    def _resolve_context_column(self, requested_column: str) -> str | None:
+        candidate_columns = [
+            requested_column,
+            "partname",
+            "part_name",
+            "componentname",
+            "component_name",
+        ]
+        for column in candidate_columns:
+            if column and column in self.df.columns:
+                return column
+        return None
+
+    @staticmethod
+    def _is_part_condition_column(column: str) -> bool:
+        return column.lower().replace("_", "").replace(" ", "") == "partcondition"
 
     def _validate_columns(self) -> None:
         if self.df.empty:
@@ -89,8 +174,12 @@ class BERTDataPreparer:
         prepared[self.label_column] = (
             prepared[self.label_column].fillna("unknown").astype(str).str.strip()
         )
+        if self.combine_partcondition:
+            prepared[self.label_column] = prepared[self.label_column].map(
+                combine_part_condition_label
+            )
 
-        if self.context_column in prepared.columns:
+        if self.context_column and self.context_column in prepared.columns:
             prepared[self.context_column] = self._normalize_text(prepared[self.context_column])
             prepared["bert_text"] = prepared.apply(
                 lambda row: (
@@ -209,7 +298,8 @@ def prepare_bert_data(
     df: pd.DataFrame,
     text_column: str = "discrepancy",
     label_column: str = "partcondition",
-    context_column: str = "part_name",
+    context_column: str = "partname",
+    combine_partcondition: bool = True,
 ) -> tuple[list[str], list[int], dict[str, Any]]:
     """
     Prepare untokenized text and encoded labels for BERT.
@@ -224,6 +314,7 @@ def prepare_bert_data(
         text_column=text_column,
         label_column=label_column,
         context_column=context_column,
+        combine_partcondition=combine_partcondition,
     )
     prepared_df = preparer.prepare_dataframe()
     texts, labels = preparer.get_texts_and_labels()
@@ -240,11 +331,12 @@ def prepare_bert_splits(
     df: pd.DataFrame,
     text_column: str = "discrepancy",
     label_column: str = "partcondition",
-    context_column: str = "part_name",
+    context_column: str = "partname",
     test_size: float = 0.2,
     val_size: float = 0.1,
     random_state: int = 42,
     stratify: bool = True,
+    combine_partcondition: bool = True,
 ) -> BERTDatasetSplits:
     """
     Prepare untokenized BERT data and split it into train/val/test sets.
@@ -254,6 +346,7 @@ def prepare_bert_splits(
         text_column=text_column,
         label_column=label_column,
         context_column=context_column,
+        combine_partcondition=combine_partcondition,
     )
     preparer.prepare_dataframe()
     return preparer.create_splits(
