@@ -8,3 +8,4 @@ requirements.txt
 __pycache__
 
 data
+ml/models/
