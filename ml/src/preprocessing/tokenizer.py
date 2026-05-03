@@ -72,7 +72,6 @@ class ModernBERTTokenizer:
     def vocab_size(self) -> int:
         return self.tokenizer.vocab_size
 
-
 # ==================================
 # Dataset test
 # ==================================
@@ -81,7 +80,7 @@ if __name__ == "__main__":
     from src.ingestion import ingest_data
     from src.preprocessing.text_cleaning import TextCleaner
 
-    # ── Load & clean ──────────────────────────────────────────
+    # ── Load & clean ────
     DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "raw" / "NLP_Dataset_2026.xlsx"
     print(f"Loading: {DATA_FILE}")
 
@@ -93,7 +92,7 @@ if __name__ == "__main__":
     print(f"Sample text[0]      : {df['discrepancy'].iloc[0][:80]!r}")
     print()
 
-    # ── Tokenize a small sample first ─────────────────────────
+    # ── Tokenize a small sample first ──────
     SAMPLE_N = 5
     t = ModernBERTTokenizer(max_length=512)
     print(f"Vocab size          : {t.vocab_size}")
@@ -107,7 +106,7 @@ if __name__ == "__main__":
         token_count = int(sample_out["attention_mask"][i].sum())
         print(f"  [{i}] tokens used: {token_count}  |  text: {df['discrepancy'].iloc[i][:60]!r}")
 
-    # ── Original texts (decoded from token IDs) ───────────────
+    # ── Original texts (decoded from token IDs) ────
     print(f"\n--- Original texts ---")
     for i in range(SAMPLE_N):
         decoded = t.decode(sample_out["input_ids"][i])
