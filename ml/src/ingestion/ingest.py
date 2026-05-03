@@ -22,9 +22,7 @@ ALLOWED_EXTENSIONS = ['.csv', '.xlsx']
 
 # Update REQUIRED_COLUMNS to use lower case (after standardization)
 REQUIRED_COLUMNS = ['operatorcontrolnumber','discrepancy']
-
-# TODO: MAY NEED CHANGES
-REQUIRED_COLUMNS = ['OperatorControlNumber','Discrepancy']
+#df.columns = df.columns.str.lower()
 
 # ==================================
 # Main Ingestion Function
