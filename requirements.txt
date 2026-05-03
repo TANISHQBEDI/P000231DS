@@ -1,5 +1,0 @@
-
-# Dependencies
-pandas
-openpyxl
-numpy
