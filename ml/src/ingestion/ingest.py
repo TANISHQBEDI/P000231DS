@@ -75,9 +75,6 @@ def validate_data(df: pd.DataFrame) -> None:
 
     # Check if the Data is empty - check for None FIRST
     if df is None or df.empty: # Check None before accessing .empty attribute
-
-    # Check if the Data is empty
-    if df.empty or df is None:
         raise ValueError("The Data is empty. No data to validate.")
 
     # Check for missing required columns
