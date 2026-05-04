@@ -5,13 +5,13 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 
 from src.model.base import BaseModel
 from src.utils.paths import PROCESSED_DIR
-
+from sklearn.svm import LinearSVC
 
 class SVMModel(BaseModel):
     """SVM classifier for text classification."""
 
     def __init__(self):
-        self.model = SVC(kernel='rbf', probability=True)
+        self.model = LinearSVC()
         self.vectorizer = TfidfVectorizer(max_features=5000)
 
     def train(self, X, y, **kwargs):
