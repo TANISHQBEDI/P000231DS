@@ -1,97 +1,44 @@
-aircraft-maintenance-nlp/
-│
-├── configs/                      # Centralized configs (VERY IMPORTANT)
-│   ├── model.yaml
-│   ├── training.yaml
-│   ├── inference.yaml
-│   └── data.yaml
-│
-├── data/
-│   ├── raw/                     # Immutable raw data
-│   ├── processed/               # Cleaned + normalized
-│   ├── interim/                 # Temporary pipeline outputs
-│   └── external/                # Dictionaries, mappings (abbreviations)
-│
-├── src/
-│   ├── data/
-│   │   ├── loader.py
-│   │   ├── preprocessing.py     # normalization, cleaning
-│   │   ├── augmentation.py
-│   │   └── validation.py
-│   │
-│   ├── features/
-│   │   ├── tokenizer.py
-│   │   └── feature_builder.py   # TF-IDF, hybrid features
-│   │
-│   ├── models/
-│   │   ├── bert_classifier.py
-│   │   ├── losses.py            # focal loss, weighted loss
-│   │   └── model_utils.py
-│   │
-│   ├── training/
-│   │   ├── train.py             # main training entrypoint
-│   │   ├── trainer.py           # training loop
-│   │   ├── evaluate.py
-│   │   └── metrics.py
-│   │
-│   ├── inference/
-│   │   ├── predictor.py         # model inference wrapper
-│   │   ├── pipeline.py          # full pipeline (preprocess + predict)
-│   │   └── postprocessing.py
-│   │
-│   ├── explainability/
-│   │   ├── shap_explainer.py
-│   │   ├── lime_explainer.py
-│   │   └── attention_vis.py
-│   │
-│   ├── active_learning/
-│   │   ├── sampler.py           # uncertainty sampling
-│   │   ├── strategies.py
-│   │   └── selector.py
-│   │
-│   ├── utils/
-│   │   ├── logger.py
-│   │   ├── config_loader.py
-│   │   └── seed.py
-│
-├── pipelines/                   # Orchestration layer
-│   ├── training_pipeline.py
-│   ├── inference_pipeline.py
-│   └── retraining_pipeline.py
-│
-├── api/                         # Serving layer
-│   ├── main.py                  # FastAPI entrypoint
-│   ├── routes/
-│   │   ├── predict.py
-│   │   ├── explain.py
-│   │   └── feedback.py
-│   └── schemas.py               # request/response models
-│
-├── hitl/
-│   ├── ui/                      # (optional) frontend
-│   └── backend/
-│       ├── feedback_store.py
-│       └── review_logic.py
-│
-├── experiments/                 # Notebooks, exploration
-│   ├── eda.ipynb
-│   └── modeling.ipynb
-│
-├── tests/
-│   ├── test_preprocessing.py
-│   ├── test_model.py
-│   └── test_pipeline.py
-│
-├── scripts/
-│   ├── run_training.sh
-│   ├── run_inference.sh
-│   └── backfill_data.py
-│
-├── models/                      # Saved models (or use MLflow)
-│   └── bert_v1/
-│
-├── mlruns/                      # MLflow tracking
-│
-├── requirements.txt
-├── Dockerfile
-└── README.md
+.
+├── data
+│   ├── interim
+│   ├── processed
+│   └── raw
+│       ├── NLP_Dataset_2026_Expanded.xlsx
+│       └── NLP_Dataset_2026.xlsx
+├── experiments
+│   ├── abbrev_candidates.csv
+│   └── analysis.py
+├── models
+│   ├── label_mapping.json
+│   ├── model.pt
+│   └── tokenizer
+│       ├── tokenizer_config.json
+│       └── tokenizer.json
+├── pipeline
+│   └── smoke.py
+├── pyproject.toml
+├── README.md
+├── scripts
+│   ├── install-dev.ps1
+│   └── install-dev.sh
+└── src
+    └── aircraft_nlp
+        ├── __init__.py
+        ├── config
+        │   ├── abbreviations.json
+        │   └── label_mappings.json
+        ├── data
+        │   ├── __init__.py
+        │   ├── preprocessing.py
+        │   ├── source
+        │   │   ├── __init__.py
+        │   │   ├── base.py
+        │   │   ├── local_file_source.py
+        │   │   └── s3_source.py
+        │   ├── splitting.py
+        │   └── validate.py
+        └── models
+            ├── bert.py
+            ├── data_prep.py
+            ├── evaluate.py
+            └── train.py
