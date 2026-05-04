@@ -83,3 +83,5 @@ P000231DS/
     ├── Issues.md
     └── Readme.md
     └── requirements.txt
+
+Install dependencies: pip install -r requirements.txt
