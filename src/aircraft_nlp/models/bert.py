@@ -1,109 +1,107 @@
-# ==================================
-# BERT Model Module
-# ==================================
+import os
 
-import torch
-import torch.nn as nn
-from transformers import AutoModel
+os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 
+import tensorflow as tf
+import tensorflow_hub as hub
+import tensorflow_text as text
+from official.nlp import optimization
 
-class BertClassifier(nn.Module):
-    """
-    BERT-based text classification model
-    """
+import matplotlib.pyplot as plt
 
-    def __init__(
-        self,
-        model_name: str = "bert-base-uncased",
-        num_labels: int = 2,
-        dropout: float = 0.3
-    ):
-        """
-        Parametrised constructor
+AUTOTUNE = tf.data.AUTOTUNE
+batch_size = 16
+seed = 42
 
-        Parameters:
-        model_name (str): pretrained model name
-        num_labels (int): number of output classes
-        dropout (float): dropout rate
-        """
-
-        super(BertClassifier, self).__init__()
-
-        # Load pretrained BERT
-        self.bert = AutoModel.from_pretrained(model_name)
-
-        # Hidden size from BERT
-        hidden_size = self.bert.config.hidden_size
-
-        # Dropout layer
-        self.dropout = nn.Dropout(dropout)
-
-        # Classification layer
-        self.classifier = nn.Linear(hidden_size, num_labels)
-
-    def forward(self, input_ids, attention_mask):
-        """
-        Forward pass
-
-        Parameters:
-        input_ids: token ids
-        attention_mask: mask
-
-        Returns:
-        logits
-        """
-
-        outputs = self.bert(
-            input_ids=input_ids,
-            attention_mask=attention_mask
-        )
-
-        # CLS token output
-        cls_output = outputs.last_hidden_state[:, 0, :]
-
-        # Apply dropout
-        x = self.dropout(cls_output)
-
-        # Classification
-        logits = self.classifier(x)
-
-        return logits
+PREPROCESSOR_URL = "https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3"
+ENCODER_URL = "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4"
+MAX_EPOCHS = 5
 
 
-# ==================================
-# Utility functions
-# ==================================
+def build_datasets_from_frames(train_df, val_df, batch_size_override=None):
+	batch = batch_size_override or batch_size
+	train_texts = train_df["text"].tolist()
+	val_texts = val_df["text"].tolist()
+	train_labels = train_df["label"].tolist()
+	val_labels = val_df["label"].tolist()
 
-def load_model(
-    model_name="bert-base-uncased",
-    num_labels=2,
-    device="cpu"
-):
-    """
-    Load model and move to device
-    """
+	label_lookup = tf.keras.layers.StringLookup()
+	label_lookup.adapt(train_labels)
 
-    model = BertClassifier(
-        model_name=model_name,
-        num_labels=num_labels
-    )
+	train_label_ids = label_lookup(train_labels)
+	val_label_ids = label_lookup(val_labels)
 
-    model.to(device)
+	train_ds = tf.data.Dataset.from_tensor_slices((train_texts, train_label_ids))
+	train_ds = (
+		train_ds.shuffle(buffer_size=len(train_texts), seed=seed)
+		.batch(batch)
+		.prefetch(AUTOTUNE)
+	)
 
-    return model
+	val_ds = tf.data.Dataset.from_tensor_slices((val_texts, val_label_ids))
+	val_ds = val_ds.batch(batch).prefetch(AUTOTUNE)
 
-
-def save_checkpoint(model, path="bert_model.pt"):
-    """
-    Save model weights
-    """
-    torch.save(model.state_dict(), path)
+	num_labels = int(label_lookup.vocabulary_size())
+	return train_ds, val_ds, num_labels, label_lookup
 
 
-def load_checkpoint(model, path="bert_model.pt", device="cpu"):
-    """
-    Load model weights
-    """
-    model.load_state_dict(torch.load(path, map_location=device))
-    model.to(device)
-    return model
+def build_model(num_labels: int) -> tf.keras.Model:
+	text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name="text")
+	preprocessor = hub.KerasLayer(PREPROCESSOR_URL, name="preprocessor")
+	encoder_inputs = preprocessor(text_input)
+
+	encoder = hub.KerasLayer(ENCODER_URL, trainable=True, name="encoder")
+	outputs = encoder(encoder_inputs)
+	pooled_output = outputs["pooled_output"]
+
+	x = tf.keras.layers.Dropout(0.2)(pooled_output)
+	logits = tf.keras.layers.Dense(num_labels, name="classifier")(x)
+
+	return tf.keras.Model(text_input, logits)
+
+
+def train_with_data(train_df, val_df, max_epochs=None, batch_size_override=None):
+	tf.random.set_seed(seed)
+
+	epochs = max_epochs or MAX_EPOCHS
+	train_ds, val_ds, num_labels, label_lookup = build_datasets_from_frames(
+		train_df,
+		val_df,
+		batch_size_override=batch_size_override,
+	)
+	model = build_model(num_labels)
+
+	steps_per_epoch = tf.data.experimental.cardinality(train_ds).numpy()
+	total_steps = steps_per_epoch * epochs
+	warmup_steps = int(0.1 * total_steps)
+
+	optimizer = optimization.create_optimizer(
+		init_lr=2e-5,
+		num_train_steps=total_steps,
+		num_warmup_steps=warmup_steps,
+		optimizer_type="adamw",
+	)
+
+	model.compile(
+		optimizer=optimizer,
+		loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+		metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+	)
+
+	history = model.fit(
+		train_ds,
+		validation_data=val_ds,
+		epochs=epochs,
+	)
+
+	plt.figure(figsize=(8, 5))
+	plt.plot(history.history.get("loss", []), label="train_loss")
+	plt.plot(history.history.get("val_loss", []), label="val_loss")
+	plt.xlabel("Epoch")
+	plt.ylabel("Loss")
+	plt.title("Training Loss")
+	plt.legend()
+	plt.tight_layout()
+	plt.show()
+
+	return model, history, label_lookup
