@@ -5,7 +5,6 @@ from aircraft_nlp.data.splitting import split
 
 from aircraft_nlp.models.train import train_model
 
-
 def main():
     # path = "data/raw/NLP_Dataset_2026_Expanded.xlsx"
     path = "data/raw/NLP_Dataset_2026.xlsx"
@@ -14,9 +13,8 @@ def main():
     validate_raw(df)
     df = preprocess_dataframe(df)
     validate_processed(df)
-    train_df, val_df = split(df)
+    # train_df, val_df = split(df)
     train_model(df)
-
     
 
 if __name__ == "__main__":

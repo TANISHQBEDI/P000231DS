@@ -12,6 +12,8 @@ from transformers import AutoTokenizer, AutoModel, get_linear_schedule_with_warm
 from aircraft_nlp.models.data_prep import prepare_bert_splits
 from aircraft_nlp.models.evaluate import evaluate_dataloader
 
+import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 
 # =============================
 # Dataset
@@ -43,6 +45,15 @@ class DistilBertClassifier(torch.nn.Module):
     def __init__(self, model_name, num_labels):
         super().__init__()
         self.bert = AutoModel.from_pretrained(model_name)
+        
+        # Freeze all embeddings and transformer layers first
+        for param in self.bert.parameters():
+            param.requires_grad = False
+            
+        # Unfreeze ONLY the last 2 transformer blocks (layers 4 and 5)
+        for param in self.bert.transformer.layer[4:].parameters():
+            param.requires_grad = True
+
         hidden = self.bert.config.hidden_size
         self.dropout = torch.nn.Dropout(0.3)
         self.classifier = torch.nn.Linear(hidden, num_labels)
@@ -93,7 +104,7 @@ def train_model(df: pd.DataFrame):
     # ---- model ----
     model = DistilBertClassifier(model_name, num_labels).to(device)
 
-    optimizer = AdamW(model.parameters(), lr=lr)
+    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
     total_steps = len(train_loader) * epochs
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
@@ -101,6 +112,16 @@ def train_model(df: pd.DataFrame):
         num_training_steps=total_steps,
     )
 
+    train_labels_array = np.array(splits.train_labels)
+    classes = np.unique(train_labels_array)
+
+    class_weights = compute_class_weight(
+        class_weight="balanced",
+        classes=classes,
+        y=train_labels_array
+    )
+
+    class_weights = torch.tensor(class_weights, dtype=torch.float).to(device)
     loss_fn = torch.nn.CrossEntropyLoss()
 
     # ---- training loop ----
@@ -112,15 +133,26 @@ def train_model(df: pd.DataFrame):
     print(f"Device: {device}")
     print(f"Train batches: {len(train_loader)}")
     print(f"Val batches: {len(val_loader)}")
+    
+
+    history = {
+    "train_loss": [],
+    "val_loss": [],
+    "train_accuracy": [],
+    "val_accuracy": [],
+    "train_precision": [],
+    "val_precision": [],
+    "train_recall": [],
+    "val_recall": [],
+    "train_f1": [],
+    "val_f1": [],
+    }
 
     for epoch in range(epochs):
         model.train()
-        total_loss = 0
+        total_train_loss = 0.0
 
-        for step, batch in enumerate(train_loader):
-            if step % 20 == 0:
-                print(f"Step {step}/{len(train_loader)}")
-
+        for batch in train_loader:
             optimizer.zero_grad()
 
             input_ids = batch["input_ids"].to(device)
@@ -134,17 +166,60 @@ def train_model(df: pd.DataFrame):
             optimizer.step()
             scheduler.step()
 
-            total_loss += loss.item()
+            total_train_loss += loss.item()
 
-        print(f"\nEpoch {epoch+1} loss: {total_loss/len(train_loader):.4f}")
+        avg_train_loss = total_train_loss / len(train_loader)
 
-        # ---- validation ----
-        metrics = evaluate_dataloader(model, val_loader, device)
-        f1 = metrics["f1_score"]
+        # ---- validation loss ----
+        model.eval()
+        total_val_loss = 0.0
+        with torch.no_grad():
+            for batch in val_loader:
+                input_ids = batch["input_ids"].to(device)
+                mask = batch["attention_mask"].to(device)
+                labels = batch["labels"].to(device)
 
-        print(f"VAL → Acc: {metrics['accuracy']:.3f} | F1: {f1:.3f}")
+                logits = model(input_ids, mask)
+                loss = loss_fn(logits, labels)
+                total_val_loss += loss.item()
 
-        # ---- best model (F1) ----
+        avg_val_loss = total_val_loss / len(val_loader)
+
+        # ---- metrics ----
+        train_metrics = evaluate_dataloader(model, train_loader, device)
+        val_metrics = evaluate_dataloader(model, val_loader, device)
+
+        # ---- store history ----
+        history["train_loss"].append(avg_train_loss)
+        history["val_loss"].append(avg_val_loss)
+
+        history["train_accuracy"].append(train_metrics["accuracy"])
+        history["val_accuracy"].append(val_metrics["accuracy"])
+
+        history["train_precision"].append(train_metrics["precision"])
+        history["val_precision"].append(val_metrics["precision"])
+
+        history["train_recall"].append(train_metrics["recall"])
+        history["val_recall"].append(val_metrics["recall"])
+
+        history["train_f1"].append(train_metrics["f1_score"])
+        history["val_f1"].append(val_metrics["f1_score"])
+
+        # ---- print every epoch ----
+        print(f"\nEpoch {epoch+1}")
+        print("-" * 58)
+        print(f"{'Split':<8} {'Acc':<8} {'Prec':<8} {'Rec':<8} {'F1':<8} {'Loss':<8}")
+        print("-" * 58)
+        print(f"{'Train':<8} {train_metrics['accuracy']:<8.4f} {train_metrics['precision']:<8.4f} {train_metrics['recall']:<8.4f} {train_metrics['f1_score']:<8.4f} {avg_train_loss:<8.4f}")
+        print(f"{'Test':<8} {val_metrics['accuracy']:<8.4f} {val_metrics['precision']:<8.4f} {val_metrics['recall']:<8.4f} {val_metrics['f1_score']:<8.4f} {avg_val_loss:<8.4f}")
+        print("-" * 58)
+
+        # ---- optional special print every 20 epochs ----
+        if (epoch + 1) % 20 == 0:
+            print("\n--- 20 epoch checkpoint reached ---\n")
+
+        # ---- best model (based on val F1) ----
+        f1 = val_metrics["f1_score"]
         if f1 > best_f1:
             best_f1 = f1
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}

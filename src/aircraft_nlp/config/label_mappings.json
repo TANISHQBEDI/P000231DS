@@ -23,7 +23,7 @@
     "out of adjust": "loose",
     "excess play": "loose",
     "unsecure": "loose",
-    "detached": "detached",
+    "detached": "loose",
     "no test": "no test",
     "discharged": "discharged",
     "dirty": "dirty"
