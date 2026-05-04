@@ -22,6 +22,7 @@ SPRINT 4-5: (Placeholder for future)
 from pathlib import Path
 import pandas as pd
 import torch
+from sklearn.preprocessing import LabelEncoder
 
 from src.ingestion.ingest import ingest_data
 from src.preprocessing.text_cleaning import TextCleaner
@@ -32,6 +33,7 @@ from src.model.bert.wrapper import BertModel
 from src.comparison.compare import compare_models, print_comparison, get_metric_differences, print_differences
 from src.comparison.selector import select_best_model, print_selection, save_selection_result
 from src.utils.paths import RAW_FILE, dataset_report_dir
+from src.model.features import FeatureEngineer
 from src.utils.paths import PROCESSED_DIR
 
 # ==================================
@@ -46,7 +48,7 @@ def run_pipeline(file_path: str = None):
     1. Ingest raw data
     2. Clean text
     3. Analyze class distribution
-    4. Feature engineering (optional)
+    4. Feature engineering
     
     Parameters:
         file_path: Path to raw data file
@@ -61,22 +63,8 @@ def run_pipeline(file_path: str = None):
         file_path = str(file_path)
 
     print("\n" + "="*80)
-    print("SPRINT 1-2: DATA PREPARATION")
+    print("DATA PREPARATION")
     print("="*80)
-
-#====================================
-# Pipeline Module
-# ==================================
-
-
-from src.eda import analyze_class_imbalance
-from src.ingestion.ingest import ingest_data
-from src.preprocessing.text_cleaning import TextCleaner
-from src.model.features import FeatureEngineer
-from src.utils.paths import RAW_FILE, dataset_report_dir
-
-def run_pipeline(file_path: str = RAW_FILE):
-    file_path = str(file_path)
 
     # =========================
     # STEP 1: INGESTION
@@ -87,13 +75,11 @@ def run_pipeline(file_path: str = RAW_FILE):
     
     try:
         df = ingest_data(file_path)
-        print(f' Loaded {len(df)} samples')
+        print(f'\n Loaded {len(df)} samples')
+        print(f'Columns: {df.columns.tolist()}')
     except Exception as e:
         print(f' Error loading data: {e}')
         raise
-    print('-'*20)
-    print('DATA INGESTION')
-    df = ingest_data(file_path)
 
     # =========================
     # STEP 2: CLEANING
@@ -110,20 +96,13 @@ def run_pipeline(file_path: str = RAW_FILE):
     except Exception as e:
         print(f' Error cleaning data: {e}')
         raise
-    print('-'*20)
-    print('DATA CLEANING')
-    cleaner = TextCleaner(df)
-    df = cleaner.pipe()
-    print(df[['discrepancy', 'discrepancy_clean']])
-
+    
     # =========================
     # STEP 3: EDA (CLASS IMBALANCE)
     # =========================
     print('\n' + '-'*80)
     print('STEP 3: EXPLORATORY DATA ANALYSIS')
     print('-'*80)
-    print('-'*20)
-    print('EDA: CLASS IMBALANCE')
 
     label_column = "partcondition"
     least_k = 10
@@ -163,7 +142,7 @@ def run_pipeline(file_path: str = RAW_FILE):
         print(f'Warning during EDA: {e}')
 
     # =========================
-    # STEP 4: FEATURE ENGINEERING (OPTIONAL)
+    # STEP 4: FEATURE ENGINEERING 
     # =========================
     print('\n' + '-'*80)
     print('STEP 4: FEATURE ENGINEERING')
@@ -178,7 +157,7 @@ def run_pipeline(file_path: str = RAW_FILE):
         X, y = None, None
 
     print('\n' + '-'*80)
-    print(" SPRINT 1-2 COMPLETED")
+    print(" DATA PREPARATION COMPLETED")
     print('-'*80 + '\n')
     
     return df, X, y
@@ -191,6 +170,7 @@ def run_sprint3_pipeline(
     file_path: str = None,
     text_column: str = "discrepancy_clean",
     label_column: str = "partcondition",
+    sample_size: int = 3000,
     compare_models_flag: bool = True,
     save_models: bool = True,
 ) -> tuple:
@@ -223,15 +203,18 @@ def run_sprint3_pipeline(
         file_path = str(RAW_FILE)
     else:
         file_path = str(file_path)
+
+    print("\n" + "-"*80)
+    print("SPRINT 3: MODELING & EVALUATION: SPLIT & MERGE")
     
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ===========================================================================
     # PHASE 1: DATA PREPARATION (Sprint 1-2 Output)
-    # ═══════════════════════════════════════════════════════════════════════════
+    #=============================================================================
     
     print("\n" + "─"*80)
     print("PHASE 1: DATA PREPARATION (Sprint 1-2)")
     print("─"*80)
-    
+
     # Step 1: Ingest data
     print("\n 1.Ingesting data...")
     try:
@@ -246,10 +229,10 @@ def run_sprint3_pipeline(
     try:
         cleaner = TextCleaner(df)
         df = cleaner.pipe()
-        df =df.sample(n=3000,random_state=42)
 
-        print(f" Sampled dataset size: {len(df)}")
+        df =df.sample(n=min(sample_size, len(df)),random_state=42)
         print(f" Cleaned text")
+        print(f" Sampled dataset size: {len(df)}")
         print(f" Columns: {df.columns.tolist()}")
     except Exception as e:
         print(f" Error cleaning data: {e}")
@@ -269,32 +252,29 @@ def run_sprint3_pipeline(
         print(f"  Number of Classes: {eda_result['summary']['num_classes']}")
     except Exception as e:
         print(f" Warning during EDA: {e}")
+
+        #Print label mapping
+        le = LabelEncoder()
+        le.fit(df[label_column])
+        label_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
+        print(f"\n Label Mapping ({len(label_mapping)} classes):")
+        print(label_mapping)
+        
+    except Exception as e:
+        print(f" Warning during EDA: {e}")
+        label_mapping = {}
     
     # Store original data for later use
     num_labels = len(df[label_column].unique())
     texts_full = df[text_column].tolist()
-
-    from sklearn.preprocessing import LabelEncoder
+    
+    # Encode labels
     le = LabelEncoder()
     labels_full = le.fit_transform(df[label_column])
-    
-    label_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
-    print("\nLabel mapping created ({len(label_mapping)} classes)")
-    print(label_mapping)
-
-    if 'eda_result' in locals():
-        print("\n EDA Summary:")
-        summary = eda_result["summary"]
-        print(summary)
-        
-        print("\n Recommendations:")
-        for rec in eda_result["recommendations"]:
-            print("-", rec)
-
-    # ═══════════════════════════════════════════════════════════════════════════
+     
+    # ====================================================
     # PHASE 2: BRANCH A - Traditional ML (SVM + TF-IDF)
-    # ══════════════════════=====================================================
-
+    # =====================================================
     
     print("\n" + "─"*80)
     print("PHASE 2: BRANCH A - Traditional ML (SVM + TF-IDF)")
@@ -319,10 +299,12 @@ def run_sprint3_pipeline(
         # Step 6: Save SVM model
         if save_models:
             svm_model.save()
+            print(f" SVM model saved")
         
         # Step 7: Evaluate SVM
         print("\n 6.Evaluating SVM Model...")
         svm_metrics = svm_model.evaluate(X_tfidf, y)
+        print(f" SVM Evaluation Results:")
         print(f"   Accuracy : {svm_metrics['accuracy']:.4f}")
         print(f"   F1-Score : {svm_metrics['f1_score']:.4f}")
         print(f"   Precision: {svm_metrics['precision']:.4f}")
@@ -333,9 +315,9 @@ def run_sprint3_pipeline(
         print(f" Error in Branch A (SVM): {e}")
         raise
     
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ================================================
     # PHASE 3: BRANCH B - Deep Learning (BERT)
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ================================================
     
     print("\n" + "─"*80)
     print("PHASE 3: BRANCH B - Deep Learning (BERT)")
@@ -355,11 +337,15 @@ def run_sprint3_pipeline(
         print("\n 8.Training BERT Model...")
         print(f" Samples: {len(texts_full)}")
         print(f" Epochs: 3")
+        print(f" Batch size: 16")
+        
+        # Use subset for faster training
+        train_size = min(2000, len(texts_full))
         loss_history = bert_model.train(
-            texts_full[:2000], 
-            labels_full[:2000], 
-            batch_size=8, 
-            epochs=1, 
+            texts_full[:train_size], 
+            labels_full[:train_size], 
+            batch_size=16, 
+            epochs=3, 
             lr=5e-5
         )
         print(f" BERT model trained")
@@ -368,11 +354,12 @@ def run_sprint3_pipeline(
         # Step 10: Save BERT model
         if save_models:
             bert_model.save()
+            print(f" BERT model saved")
             
-        
         # Step 11: Evaluate BERT
         print("\n 9.Evaluating BERT Model...")
         bert_metrics = bert_model.evaluate(texts_full, labels_full)
+        print(f"   BERT Evaluation Results:")
         print(f"   Accuracy : {bert_metrics['accuracy']:.4f}")
         print(f"   F1-Score : {bert_metrics['f1_score']:.4f}")
         print(f"   Precision: {bert_metrics['precision']:.4f}")
@@ -383,9 +370,9 @@ def run_sprint3_pipeline(
         print(f" Error in Branch B (BERT): {e}")
         raise
     
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ====================================================
     # PHASE 4: MERGE POINT - Compare & Select Best Model
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ====================================================
     
     print("\n" + "─"*80)
     print("PHASE 4: MERGE POINT - Model Comparison & Selection")
@@ -415,26 +402,29 @@ def run_sprint3_pipeline(
         print_selection(best_model_name, best_metrics)
         
         # Step 15: Save selection result
+        Path(PROCESSED_DIR / "model_selection_result.txt").parent.mkdir(parents=True, exist_ok=True)
         save_selection_result(
             best_model_name, 
             best_metrics,
-            output_path=PROCESSED_DIR / "model_selection_result.txt"
+            output_path=str(PROCESSED_DIR / "model_selection_result.txt")
         )
         
     except Exception as e:
         print(f" Error in Merge Phase: {e}")
         raise
     
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ====================================================
     # FINAL OUTPUT
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ====================================================
     
     print("\n" + "="*80)
-    print(" SPRINT 3 PIPELINE COMPLETE")
+    print(" BERT MODEL PIPELINE COMPLETE")
     print("="*80)
     print(f"\n BEST MODEL: {best_model_name}")
     print(f" F1-Score: {best_metrics['f1_score']:.4f}")
     print(f" Accuracy: {best_metrics['accuracy']:.4f}")
+    print(f" Precision: {best_metrics['precision']:.4f}")
+    print(f" Recall: {best_metrics['recall']:.4f}")
     print(f" Saved to: {PROCESSED_DIR / 'models/'}")
     print("="*80 + "\n")
     
@@ -465,9 +455,3 @@ if __name__ == "__main__":
     # Step 4: Feature Engineering (TF-IDF, BoW, label encoding)
         # TODO: add feature engineering module wrapper function.
 
-
-# =========================
-# RUN PIPELINE
-# =========================
-if __name__ == "__main__":
-    run_pipeline()
