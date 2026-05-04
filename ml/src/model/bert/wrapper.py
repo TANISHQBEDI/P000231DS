@@ -95,3 +95,4 @@ class BertModel(BaseModel):
             print(f"BERT model loaded from: {path}")
             
             return self
+
