@@ -13,9 +13,9 @@ AUTOTUNE = tf.data.AUTOTUNE
 batch_size = 16
 seed = 42
 
-PREPROCESSOR_URL = "https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3"
-ENCODER_URL = "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4"
-MAX_EPOCHS = 5
+PREPROCESSOR_URL = "https://kaggle.com/models/tensorflow/bert/TensorFlow2/en-uncased-preprocess/3"
+ENCODER_URL = "https://www.kaggle.com/models/tensorflow/bert/TensorFlow2/bert-en-uncased-l-4-h-256-a-4/2"
+MAX_EPOCHS = 15
 
 
 def build_datasets_from_frames(train_df, val_df, batch_size_override=None):
