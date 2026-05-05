@@ -1,23 +1,32 @@
-#!/usr/bin/env bash
-set -euo pipefail
+Param(
+  [switch]$NoActivate
+)
+
+$ErrorActionPreference = "Stop"
 
 # Always run from repo root
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT_DIR"
+$RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
+Set-Location $RootDir
 
 # Create venv if missing
-if [ ! -d ".venv" ]; then
-  python3 -m venv .venv
-fi
+if (-not (Test-Path ".venv")) {
+  python -m venv .venv
+}
 
-# Activate venv
-source .venv/bin/activate
+# Activate venv unless suppressed
+if (-not $NoActivate) {
+  . .\.venv\Scripts\Activate.ps1
+}
 
 # Upgrade pip
 python -m pip install -U pip
 
 # Uninstall package if it exists
-python -m pip uninstall -y aircraft-maintenance-nlp || true
+python -m pip uninstall -y aircraft-maintenance-nlp 2>$null
 
 # Install deps + editable package
 python -m pip install -e .
+
+if ($NoActivate) {
+  Write-Host "Environment created. Activate with: .\.venv\Scripts\Activate.ps1"
+}
