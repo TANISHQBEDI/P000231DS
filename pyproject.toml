@@ -12,9 +12,15 @@ dependencies = [
     "numpy",
     "regex",
     "scikit-learn",
-    "transformers",
-    "torch",
-    "accelerate"
+    "tensorflow",
+    "tensorflow-text",
+    "tensorflow-hub",
+    "safetensors",
+    "tensorboard",
+    "tensorboard-data-server",
+    "tensorflow-datasets",
+    "tensorflow-metadata",
+    "tensorflow-model-optimization"
 
 ]
 
