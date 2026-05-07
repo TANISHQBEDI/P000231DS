@@ -42,3 +42,31 @@
             ├── data_prep.py
             ├── evaluate.py
             └── train.py
+
+## Setup
+
+### macOS (zsh/bash)
+
+```bash
+./scripts/install-dev.sh
+```
+
+### Windows
+
+The current `scripts/install-dev.ps1` is a bash script (it uses `#!/usr/bin/env bash`), so it will **not** run in PowerShell. Use one of these options:
+
+**Option A: Git Bash (recommended)**
+
+```bash
+./scripts/install-dev.sh
+```
+
+**Option B: PowerShell (manual steps)**
+
+```powershell
+python -m venv .venv
+./.venv/Scripts/Activate.ps1
+python -m pip install -U pip
+python -m pip uninstall -y aircraft-maintenance-nlp
+python -m pip install -e .
+```
