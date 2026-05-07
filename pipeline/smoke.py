@@ -7,7 +7,8 @@ from aircraft_nlp.models.bert import train_with_data
 
 def main():
     # path = "data/raw/NLP_Dataset_2026_Expanded.xlsx"
-    path = "data/raw/NLP_Dataset_2026.xlsx"
+    # path = "data/raw/NLP_Dataset_2026.xlsx"
+    path = "data/raw/balanced.csv"
     source = LocalFileSource(path)
     df = source.load()
     validate_raw(df)

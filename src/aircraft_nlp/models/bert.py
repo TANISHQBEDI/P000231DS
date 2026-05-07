@@ -1,4 +1,7 @@
+import json
 import os
+from datetime import datetime
+from pathlib import Path
 
 os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
 
@@ -8,6 +11,8 @@ import tensorflow_text as text
 from official.nlp import optimization
 
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import classification_report
 
 AUTOTUNE = tf.data.AUTOTUNE
 batch_size = 16
@@ -103,5 +108,54 @@ def train_with_data(train_df, val_df, max_epochs=None, batch_size_override=None)
 	plt.legend()
 	plt.tight_layout()
 	plt.show()
+
+	# Save training artifacts for inference and analysis.
+	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+	output_dir = Path("models") / timestamp
+	output_dir.mkdir(parents=True, exist_ok=True)
+
+	model.save(output_dir / "model")
+
+	label_mapping = {label: int(idx) for idx, label in enumerate(label_lookup.get_vocabulary())}
+	with (output_dir / "label_mapping.json").open("w", encoding="utf-8") as f:
+		json.dump(label_mapping, f, indent=2)
+
+	val_logits = model.predict(val_ds)
+	val_pred_ids = np.argmax(val_logits, axis=1)
+	val_true_ids = np.concatenate([labels.numpy() for _, labels in val_ds], axis=0)
+
+	labels = label_lookup.get_vocabulary()
+	report_dict = classification_report(
+		val_true_ids,
+		val_pred_ids,
+		target_names=labels,
+		output_dict=True,
+		zero_division=0,
+	)
+	report_text = classification_report(
+		val_true_ids,
+		val_pred_ids,
+		target_names=labels,
+		zero_division=0,
+	)
+
+	with (output_dir / "classification_report.json").open("w", encoding="utf-8") as f:
+		json.dump(report_dict, f, indent=2)
+	(output_dir / "classification_report.txt").write_text(report_text, encoding="utf-8")
+
+	loss_path = output_dir / "loss.png"
+	plt.savefig(loss_path)
+
+	training_info = {
+		"preprocessor_url": PREPROCESSOR_URL,
+		"encoder_url": ENCODER_URL,
+		"max_epochs": epochs,
+		"batch_size": batch_size_override or batch_size,
+		"random_seed": seed,
+	}
+	with (output_dir / "training_config.json").open("w", encoding="utf-8") as f:
+		json.dump(training_info, f, indent=2)
+	with (output_dir / "history.json").open("w", encoding="utf-8") as f:
+		json.dump(history.history, f, indent=2)
 
 	return model, history, label_lookup
