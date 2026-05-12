@@ -1,38 +1,26 @@
-import { useEffect, useState } from "react";
-import { checkBackend } from "./services/api";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+// Import page components
+import Home from "./pages/Home";
+import Health from "./pages/Health";
 
 function App() {
-
-    const [message, setMessage] = useState("");
-
-    useEffect(() => {
-
-        async function fetchData() {
-
-            try {
-
-                const data = await checkBackend();
-
-                setMessage(data.status);
-
-            } catch (error) {
-
-                setMessage("Backend connection failed");
-            }
-        }
-
-        fetchData();
-
-    }, []);
-
     return (
-        <div style={{ padding: "2rem" }}>
+        <BrowserRouter>
 
-            <h1>Maintenance NLP App</h1>
+            {/* Simple nav shell */}
+            <nav style={{ padding: "1rem", borderBottom: "1px solid #ccc" }}>
+                <Link to="/" style={{ marginRight: "1rem" }}>Home</Link>
+                <Link to="/health">Health</Link>
+            </nav>
 
-            <p>{message}</p>
+            {/* Page routing */}
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/health" element={<Health />} />
+            </Routes>
 
-        </div>
+        </BrowserRouter>
     );
 }
 
