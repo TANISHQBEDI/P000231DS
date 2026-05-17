@@ -1,0 +1,317 @@
+/* Dashboard styling — reuses the theme tokens from index.css
+   (--bg, --text, --text-h, --border, --accent, --accent-bg, --shadow). */
+
+.app-shell {
+  display: flex;
+  flex: 1;
+  min-height: 100svh;
+  text-align: left;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--social-bg);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: var(--text-h);
+  font-size: 18px;
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 4px;
+  flex: 1;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-link:hover {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.sidebar-link.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  font-weight: 600;
+}
+
+.sidebar-foot {
+  padding: 12px 20px 0;
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.6;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Main / pages ---------- */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 40px;
+  overflow-x: auto;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-head h1 {
+  font-size: 28px;
+  margin: 0 0 4px;
+  letter-spacing: -0.5px;
+}
+
+.page-sub {
+  color: var(--text);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.card h3 {
+  font-size: 14px;
+  color: var(--text-h);
+  margin: 0 0 8px;
+}
+
+.card.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* ---------- Dropzone ---------- */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dropzone:hover,
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.dropzone-title {
+  font-size: 16px;
+  color: var(--text-h);
+  margin-bottom: 4px;
+}
+
+.dropzone-sub {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.dropzone-file {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+/* ---------- Buttons ---------- */
+.actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* ---------- Messages ---------- */
+.form-error {
+  color: #d63b3b;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.form-ok {
+  color: #2e9e5b;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+/* ---------- Grids / tables ---------- */
+.grid-wrap {
+  margin-top: 12px;
+}
+
+.pred-table-wrap {
+  overflow-x: auto;
+}
+
+.pred-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.pred-table th,
+.pred-table td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pred-table th {
+  background: var(--social-bg);
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.cell-text {
+  max-width: 320px;
+}
+
+.row-low-conf {
+  background: rgba(214, 59, 59, 0.08);
+}
+
+.cond-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conf {
+  font-weight: 600;
+}
+
+.conf-ok {
+  color: #2e9e5b;
+}
+
+.conf-low {
+  color: #d63b3b;
+  font-weight: 600;
+}
+
+/* ---------- History diff ---------- */
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.json-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  font-family: var(--mono);
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--text-h);
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: column;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .app-main {
+    padding: 20px;
+  }
+  .diff-grid {
+    grid-template-columns: 1fr;
+  }
+}
