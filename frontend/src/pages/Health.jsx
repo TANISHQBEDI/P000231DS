@@ -1,42 +1,39 @@
-// Health.jsx
-// Routes to the health check page
+// Health.jsx - backend connectivity check.
 
 import { useEffect, useState } from "react";
 import { checkBackend } from "../services/api";
 
 function Health() {
+  const [message, setMessage] = useState("Checking…");
+  const [ok, setOk] = useState(null);
 
-    const [message, setMessage] = useState("");
+  useEffect(() => {
+    checkBackend()
+      .then((data) => {
+        setMessage(data.status);
+        setOk(true);
+      })
+      .catch(() => {
+        setMessage("Backend connection failed");
+        setOk(false);
+      });
+  }, []);
 
-    useEffect(() => {
-
-        async function fetchData() {
-
-            try {
-
-                const data = await checkBackend();
-
-                setMessage(data.status);
-
-            } catch (error) {
-
-                setMessage("Backend connection failed");
-            }
-        }
-
-        fetchData();
-
-    }, []);
-
-    return (
-        <div style={{ padding: "2rem" }}>
-
-            <h1>Health Check</h1>
-
-            <p>{message}</p>
-
-        </div>
-    );
+  return (
+    <div className="page">
+      <header className="page-head">
+        <h1>System Health</h1>
+      </header>
+      <section className="card">
+        <p>
+          Backend status:{" "}
+          <span className={ok ? "conf-ok" : ok === false ? "conf-low" : ""}>
+            {message}
+          </span>
+        </p>
+      </section>
+    </div>
+  );
 }
 
 export default Health;

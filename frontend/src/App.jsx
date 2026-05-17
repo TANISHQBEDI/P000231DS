@@ -1,27 +1,29 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Import page components
-import Home from "./pages/Home";
+import { AppProvider } from "./context/AppContext";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Results from "./pages/Results";
+import History from "./pages/History";
 import Health from "./pages/Health";
 
+import "./components/dashboard.css";
+
 function App() {
-    return (
-        <BrowserRouter>
-
-            {/* Simple nav shell */}
-            <nav style={{ padding: "1rem", borderBottom: "1px solid #ccc" }}>
-                <Link to="/" style={{ marginRight: "1rem" }}>Home</Link>
-                <Link to="/health">Health</Link>
-            </nav>
-
-            {/* Page routing */}
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/health" element={<Health />} />
-            </Routes>
-
-        </BrowserRouter>
-    );
+  return (
+    <AppProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/health" element={<Health />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AppProvider>
+  );
 }
 
 export default App;

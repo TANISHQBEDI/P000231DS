@@ -1,0 +1,13 @@
+Discrepancy,PartCondition
+"Fuel pump iaw amm not working correctly during run-up",faulty
+"Corrosion found on left main landing gear bracket",corroded
+"Crack observed on engine cowling near latch",cracked
+"Cabin door seal worn and leaking air in flight",worn
+"APU inlet door dented after ground equipment contact",damaged
+"Hydraulic line fitting loose causing slow seepage",loose
+"Cockpit fire warning false activation during taxi",false activation
+"Oxygen bottle found discharged below minimum pressure",discharged
+"Cargo bay light missing from forward compartment",missing
+"Strange odor reported from forward galley oven",odor
+"Composite panel delaminated on right wing fairing",delaminated
+"No discrepancy noted, routine inspection only",none
