@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify
 
-from aircraft_nlp.service import get_history_item, list_history
+from app.services.umec_storage import get_history_item, list_history
 
 history_bp = Blueprint("history", __name__)
 

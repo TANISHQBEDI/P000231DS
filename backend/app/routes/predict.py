@@ -13,6 +13,7 @@ from flask import Blueprint, jsonify, request
 from umec.data.preprocessing import normalize_tokens, preprocess_dataframe
 from umec.data.resources import load_failure_keywords, load_token_mappings
 from umec.data.validation import validate_columns
+from umec.pipeline.runner import run_train
 from umec.utils.config import load_config
 from umec.utils.serialization import load_model
 
@@ -34,7 +35,12 @@ def _load_assets() -> dict[str, object]:
         return cached
 
     cfg = load_config(config_dir)
-    umec = load_model(Path(cfg.project.model_dir) / "umec.joblib")
+    model_dir = Path(cfg.project.model_dir)
+    umec_path = model_dir / "umec.joblib"
+    if not umec_path.exists():
+        run_train(str(config_dir))
+
+    umec = load_model(umec_path)
     token_map = None
     if cfg.data.preprocess.get("enabled", True):
         token_map = load_token_mappings(cfg.data.resources["token_mappings"])
@@ -42,7 +48,7 @@ def _load_assets() -> dict[str, object]:
     token_clf = None
     keyword_index = None
     try:
-        token_clf = load_model(Path(cfg.project.model_dir) / "token_matching.joblib")
+        token_clf = load_model(model_dir / "token_matching.joblib")
         failure_keywords = load_failure_keywords(cfg.data.resources["failure_keywords"])
         token_vocab = token_clf.vectorizer.vocabulary_
         keyword_index = {}

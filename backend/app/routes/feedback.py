@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, request
 
-from aircraft_nlp.service import save_predictions
+from app.services.umec_storage import save_predictions
 
 feedback_bp = Blueprint("feedback", __name__)
 

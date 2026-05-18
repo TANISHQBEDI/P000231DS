@@ -1,8 +1,8 @@
-# train.py - triggers (mock) retraining. ML logic lives in src/aircraft_nlp.
+# train.py - triggers UMEC training using configs/core.
 
 from flask import Blueprint, jsonify, request
 
-from aircraft_nlp.service import run_training
+from app.services.umec_training import run_training
 
 train_bp = Blueprint("train", __name__)
 
