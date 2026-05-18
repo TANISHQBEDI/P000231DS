@@ -1,6 +1,6 @@
 // Single place for all backend communication (per Web Module rules).
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 async function asJson(response) {
   let data = null;
@@ -20,7 +20,7 @@ async function asJson(response) {
 
 // Health check.
 export async function checkBackend() {
-  const response = await fetch(`${API_BASE}/api/health`);
+  const response = await fetch(`${API_BASE}/health`);
   return response.json();
 }
 
@@ -28,7 +28,7 @@ export async function checkBackend() {
 export async function uploadCsv(file) {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(`${API_BASE}/api/upload`, {
+  const response = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     body: form,
   });
@@ -37,7 +37,7 @@ export async function uploadCsv(file) {
 
 // Run (mock) inference on edited rows.
 export async function runPrediction(rows) {
-  const response = await fetch(`${API_BASE}/api/predict`, {
+  const response = await fetch(`${API_BASE}/predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rows }),
@@ -47,7 +47,7 @@ export async function runPrediction(rows) {
 
 // Trigger (mock) retraining.
 export async function runTraining(payload = {}) {
-  const response = await fetch(`${API_BASE}/api/train`, {
+  const response = await fetch(`${API_BASE}/train`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -57,7 +57,7 @@ export async function runTraining(payload = {}) {
 
 // Persist user-edited predictions + write audit trail.
 export async function submitFeedback(records, before = [], user = "anonymous") {
-  const response = await fetch(`${API_BASE}/api/feedback`, {
+  const response = await fetch(`${API_BASE}/feedback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ records, before, user }),
@@ -66,11 +66,11 @@ export async function submitFeedback(records, before = [], user = "anonymous") {
 }
 
 export async function getHistory() {
-  const response = await fetch(`${API_BASE}/api/history`);
+  const response = await fetch(`${API_BASE}/history`);
   return asJson(response);
 }
 
 export async function getHistoryItem(id) {
-  const response = await fetch(`${API_BASE}/api/history/${id}`);
+  const response = await fetch(`${API_BASE}/history/${id}`);
   return asJson(response);
 }

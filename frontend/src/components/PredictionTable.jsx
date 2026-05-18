@@ -14,21 +14,20 @@ function PredictionTable({ predictions, onEdit }) {
   const [showLowOnly, setShowLowOnly] = useState(false);
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
-
-  if (!predictions?.length) return null;
+  const safeRows = predictions ?? [];
 
   const labelOptions = useMemo(() => {
     const labels = new Set();
-    predictions.forEach((p) => {
+    safeRows.forEach((p) => {
       if (p.predicted_condition) labels.add(p.predicted_condition);
       if (p.final_condition) labels.add(p.final_condition);
     });
     return Array.from(labels).sort((a, b) => a.localeCompare(b));
-  }, [predictions]);
+  }, [safeRows]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const rows = predictions.filter((p) => {
+    const rows = safeRows.filter((p) => {
       if (showChangedOnly && p.final_condition === p.predicted_condition) {
         return false;
       }
@@ -62,7 +61,7 @@ function PredictionTable({ predictions, onEdit }) {
       return String(av).localeCompare(String(bv)) * dir;
     });
     return sorted;
-  }, [predictions, query, showChangedOnly, showLowOnly, sortKey, sortDir]);
+  }, [safeRows, query, showChangedOnly, showLowOnly, sortKey, sortDir]);
 
   const total = filtered.length;
   const maxPage = pageSize === 0 ? 1 : Math.max(1, Math.ceil(total / pageSize));
@@ -70,6 +69,8 @@ function PredictionTable({ predictions, onEdit }) {
   const start = pageSize === 0 ? 0 : (safePage - 1) * pageSize;
   const end = pageSize === 0 ? total : start + pageSize;
   const paged = filtered.slice(start, end);
+
+  if (!safeRows.length) return null;
 
   function toggleSort(nextKey) {
     if (sortKey === nextKey) {
