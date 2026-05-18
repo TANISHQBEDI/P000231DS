@@ -1,49 +1,6 @@
-.
-├── data
-│   ├── interim
-│   ├── processed
-│   └── raw
-│       ├── NLP_Dataset_2026_Expanded.xlsx
-│       └── NLP_Dataset_2026.xlsx
-├── experiments
-│   ├── abbrev_candidates.csv
-│   └── analysis.py
-├── models
-│   ├── label_mapping.json
-│   ├── model.pt
-│   └── tokenizer
-│       ├── tokenizer_config.json
-│       └── tokenizer.json
-├── pipeline
-│   └── smoke.py
-├── pyproject.toml
-├── README.md
-├── scripts
-│   ├── install-dev.ps1
-│   └── install-dev.sh
-└── src
-    └── aircraft_nlp
-        ├── __init__.py
-        ├── config
-        │   ├── abbreviations.json
-        │   └── label_mappings.json
-        ├── data
-        │   ├── __init__.py
-        │   ├── preprocessing.py
-        │   ├── source
-        │   │   ├── __init__.py
-        │   │   ├── base.py
-        │   │   ├── local_file_source.py
-        │   │   └── s3_source.py
-        │   ├── splitting.py
-        │   └── validate.py
-        └── models
-            ├── bert.py
-            ├── data_prep.py
-            ├── evaluate.py
-            └── train.py
-
 ## Setup
+
+Notes: `pyproject.toml` defines minimum runtime dependencies, while `requirements.txt` is a pinned dev snapshot. The install script uses both so they stay aligned.
 
 ### macOS (zsh/bash)
 
@@ -70,3 +27,141 @@ python -m pip install -U pip
 python -m pip uninstall -y aircraft-maintenance-nlp
 python -m pip install -e .
 ```
+
+## UMEC Project
+
+Production-style, research-friendly implementation of an unsupervised multi-class ensemble classifier for aerospace maintenance discrepancy logs. The core method follows the 2025 UMEC paper: multiple unsupervised/domain-specific base classifiers, ECOC-like reduction with max-based order statistics, and imbalance-aware decoding.
+
+### Project Structure
+
+- configs/core/: YAML configs for project, data, and model settings
+- data/: data storage (raw/processed/external)
+- models/: serialized models (optional)
+- reports/: metrics, figures, and artifacts
+- scripts/: CLI entry points
+- src/: Python package code
+- tests/: minimal tests
+
+### Assumptions
+
+- Data contains a text column such as `processed_discrepancy` and an optional label column such as `processed_partcondition_merged`.
+- Failure keyword dictionaries, token maps, and label maps are stored under data/external/ as JSON or YAML.
+- If a resource file is missing, the pipeline will raise a clear error or produce a TODO marker in logs.
+
+### Quickstart
+
+1. Set up environment:
+
+```bash
+./scripts/install-dev.sh
+```
+
+2. Update configs to point to your data and resources:
+
+- configs/core/data.yaml
+- configs/core/model.yaml
+
+Config files:
+
+- configs/core/project.yaml: project name, random seed, output/model directories
+- configs/core/data.yaml: data path/format, source columns, preprocessing, and resource paths
+- configs/core/model.yaml: base model settings and UMEC decoding options
+
+Key data config fields:
+
+- `source_text_column`: raw text column name (e.g., `Discrepancy`)
+- `source_label_column`: raw label column name (optional)
+- `text_column`: processed text column to use in models
+- `label_column`: processed label column to use for evaluation
+- `read_kwargs`: pandas read options (e.g., `low_memory: false`)
+
+3. Run training / scoring:
+
+```bash
+python scripts/train.py --config configs/core
+```
+
+4. Evaluate (if labels are available):
+
+```bash
+python scripts/evaluate.py --config configs/core
+```
+
+5. Explain a record:
+
+```bash
+python scripts/explain.py --config configs/core --index 10
+```
+
+Use saved models (no retrain):
+
+```bash
+python scripts/explain.py --config configs/core --index 10 --use-saved
+```
+
+6. Predict on new data:
+
+```bash
+python scripts/predict.py --config configs/core --input data/raw/test.csv --output reports/predictions.csv
+```
+
+Optional flags:
+
+- `--include-xai`: add confidence and keyword contribution summaries
+- `--top-k`: number of top keywords to include (default: 3)
+- `--scores-output`: optional CSV path to export per-class UMEC scores
+- `--batch-size`: batch size for inference (default: 5000)
+
+Example with XAI:
+
+```bash
+python scripts/predict.py --config configs/core --input data/raw/test.csv --output reports/predictions.csv --include-xai --top-k 3
+```
+
+Example with class scores export:
+
+```bash
+python scripts/predict.py --config configs/core --input data/raw/test.csv --output reports/predictions.csv --scores-output reports/umec_class_scores.csv
+```
+
+XAI columns:
+
+- `xai_confidence_pct`: top-1 vs top-2 confidence ratio (percent)
+- `xai_keywords`: top contributing keywords for the predicted class with percent weights
+
+### Config Notes
+
+- The UMEC ECOC matrix is auto-generated by default (pairwise scheme). You can provide a custom matrix in configs/core/model.yaml.
+- Imbalance-aware decoding uses class priors from data if labels are provided at fit time, otherwise it defaults to uniform priors.
+- If `allow_unclassified` is true, you may need a negative `unclassified_threshold` because UMEC class scores can be negative.
+- The base classifiers output class-score DataFrames; UMEC aggregates per ECOC column using max-positive minus max-negative scores.
+
+### Performance Notes
+
+- `semantic_similarity.workers` controls FastText training threads.
+- `semantic_similarity.n_jobs` controls sentence-vector computation threads.
+- For 8 GB RAM, start with 2-4 threads for each and adjust if memory pressure is high.
+
+### Data and Resources
+
+Expected resource files (examples):
+
+- data/external/failure_keywords.json
+- data/external/token_mappings.json
+- data/external/label_mappings.json
+
+If you already have these in another location, update configs/core/data.yaml to point to them.
+
+### Notes on the Paper Alignment
+
+This implementation uses:
+
+- Unsupervised base models that emit per-class scores.
+- ECOC-like binary reductions for multiclass decoding.
+- Order statistic reduction: max over positive group minus max over negative group.
+- Aggregation of reduction statistics across base classifiers.
+- Imbalance-aware decoding by prior-adjusted margins.
+
+### License
+
+Internal research use.
