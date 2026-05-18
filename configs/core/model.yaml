@@ -1,0 +1,28 @@
+models:
+  token_matching:
+    ngram_range: [1, 2]
+    lowercase: true
+    use_idf: true
+    sublinear_tf: true
+    normalize_tokens: true
+  semantic_similarity:
+    n_jobs: 4
+    embedding_dim: 100
+    window: 5
+    min_count: 2
+    workers: 4
+    sg: 1
+    use_sif: true
+    sif_a: 0.001
+    remove_pc: true
+    random_state: 42
+    show_progress: true
+  umec:
+    ecoc:
+      scheme: pairwise
+      custom_matrix: null
+    aggregation: mean
+    decode:
+      prior_weight: 0.35
+      allow_unclassified: true
+      unclassified_threshold: -4.5

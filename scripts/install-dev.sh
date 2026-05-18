@@ -19,5 +19,10 @@ python -m pip install -U pip
 # Uninstall package if it exists
 python -m pip uninstall -y aircraft-maintenance-nlp || true
 
+# Install pinned dependencies if available
+if [ -f "requirements.txt" ]; then
+  python -m pip install -r requirements.txt
+fi
+
 # Install deps + editable package
 python -m pip install -e .
