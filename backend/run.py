@@ -1,7 +1,7 @@
 # This is the entry point for the Flask App. It initializes the app and defines the routes.
 
 from app import create_app
-from flask import redirect
+from flask_cors import CORS
 
 app = create_app()
 

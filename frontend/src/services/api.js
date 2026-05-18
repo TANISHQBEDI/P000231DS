@@ -1,6 +1,6 @@
 // Single place for all backend communication (per Web Module rules).
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:5000";
 
 async function asJson(response) {
   let data = null;

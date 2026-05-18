@@ -13,7 +13,11 @@ if _SRC.is_dir() and str(_SRC) not in sys.path:
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "http://localhost:5173"}},
+        supports_credentials=True,
+    )
 
     from app.routes.root import root_bp
     from app.routes.health import health_bp
