@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useApp } from "../context/AppContext";
@@ -10,6 +10,7 @@ function Results() {
   const [saveMsg, setSaveMsg] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editedPredictions, setEditedPredictions] = useState([]);
 
   if (!prediction) {
     return (
@@ -30,11 +31,27 @@ function Results() {
   const { predictions, model_version, generated_at, source } = prediction;
   const lowCount = predictions.filter((p) => p.low_confidence).length;
 
+  useEffect(() => {
+    const seeded = (predictions || []).map((p) => ({
+      ...p,
+      final_condition: p.final_condition || p.predicted_condition,
+    }));
+    setEditedPredictions(seeded);
+  }, [predictions]);
+
+  function handleEdit(rowId, value) {
+    setEditedPredictions((prev) =>
+      prev.map((p) =>
+        p.row_id === rowId ? { ...p, final_condition: value } : p
+      )
+    );
+  }
+
   async function handleSave() {
     setError("");
     setBusy(true);
     try {
-      const res = await submitFeedback(predictions, source || []);
+      const res = await submitFeedback(editedPredictions, predictions || [], "human");
       setSaveMsg(
         `Saved as record ${res.id} (${res.num_records} rows) — see Archived History.`,
       );
@@ -61,7 +78,10 @@ function Results() {
       </header>
 
       <section className="card">
-        <PredictionTable predictions={predictions} />
+        <PredictionTable
+          predictions={editedPredictions}
+          onEdit={handleEdit}
+        />
         <div className="actions">
           <button
             className="btn-primary"
