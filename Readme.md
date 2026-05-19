@@ -28,6 +28,30 @@ python -m pip uninstall -y aircraft-maintenance-nlp
 python -m pip install -e .
 ```
 
+### Docker (backend + frontend)
+
+From the project root, build and start both services:
+
+```bash
+docker compose up --build
+```
+
+Services and URLs:
+
+- Backend: http://localhost:5050
+- Frontend: http://localhost:5173
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+Notes:
+
+- The compose file mounts the repo into the containers for live reload.
+- Backend runs with `FLASK_ENV=development`.
+
 ## UMEC Project
 
 Production-style, research-friendly implementation of an unsupervised multi-class ensemble classifier for aerospace maintenance discrepancy logs. The core method follows the 2025 UMEC paper: multiple unsupervised/domain-specific base classifiers, ECOC-like reduction with max-based order statistics, and imbalance-aware decoding.
